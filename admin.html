@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>藥品手冊管理後台</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --teal:    #0d7a6e;
+  --teal2:   #0a5f55;
+  --teal-lt: #e8f5f3;
+  --accent:  #e8734a;
+  --warn:    #f59e0b;
+  --danger:  #dc2626;
+  --ok:      #16a34a;
+  --gray1:   #f4f6f8;
+  --gray2:   #e2e8ed;
+  --gray3:   #8a96a0;
+  --text:    #1e2a30;
+  --radius:  10px;
+  --shadow:  0 2px 10px rgba(0,0,0,.09);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+body { font-family: 'Noto Sans TC','Microsoft JhengHei',Arial,sans-serif; background: var(--gray1); color: var(--text); min-height: 100vh }
+
+/* ── Header ── */
+header { background: linear-gradient(135deg, var(--teal2), var(--teal)); color: #fff; padding: 18px 24px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.2) }
+.logo { font-size: 24px }
+header h1 { font-size: 1.1rem; font-weight: 700 }
+header p  { font-size: .78rem; opacity: .78; margin-top: 2px }
+.back-link { margin-left: auto; color: rgba(255,255,255,.8); text-decoration: none; font-size: .83rem; border: 1px solid rgba(255,255,255,.35); border-radius: 6px; padding: 5px 12px; white-space: nowrap }
+.back-link:hover { background: rgba(255,255,255,.15) }
+
+/* ── Layout ── */
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px }
+.step { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden }
+.step-head { padding: 16px 20px; border-bottom: 1px solid var(--gray2); display: flex; align-items: center; gap: 12px }
+.step-num { width: 30px; height: 30px; border-radius: 50%; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .88rem; flex-shrink: 0 }
+.step-num.done { background: var(--ok) }
+.step-title { font-weight: 700; font-size: 1rem }
+.step-sub { font-size: .78rem; color: var(--gray3); margin-top: 2px }
+.step-body { padding: 20px }
+
+/* ── Drop zone ── */
+.drop-zone { border: 2.5px dashed var(--gray2); border-radius: var(--radius); padding: 40px 20px; text-align: center; transition: all .2s; cursor: pointer }
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--teal); background: var(--teal-lt) }
+.drop-zone .icon { font-size: 2.8rem; margin-bottom: 10px }
+.drop-zone p { color: var(--gray3); font-size: .9rem; margin-bottom: 8px }
+.drop-zone strong { color: var(--teal) }
+.btn-upload { display: inline-block; background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 9px 22px; cursor: pointer; font-size: .88rem; margin-top: 10px }
+.btn-upload:hover { background: var(--teal2) }
+#fileInput { display: none }
+
+/* ── Stats bar ── */
+.stats-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px }
+.stat-pill { background: var(--gray1); border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 120px }
+.stat-pill .num { font-size: 1.5rem; font-weight: 700; color: var(--teal) }
+.stat-pill .lbl { font-size: .75rem; color: var(--gray3); margin-top: 2px }
+
+/* ── Alert ── */
+.alert { border-radius: 8px; padding: 12px 16px; font-size: .85rem; margin-bottom: 14px; display: flex; gap: 10px; align-items: flex-start }
+.alert-ok   { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d }
+.alert-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e }
+.alert-err  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b }
+.alert-icon { font-size: 1.1rem; flex-shrink: 0 }
+
+/* ── Preview table ── */
+.table-wrap { overflow-x: auto; border: 1px solid var(--gray2); border-radius: 8px }
+table { width: 100%; border-collapse: collapse; font-size: .82rem }
+thead th { background: var(--teal); color: #fff; padding: 9px 12px; text-align: left; white-space: nowrap; font-weight: 600; position: sticky; top: 0 }
+tbody tr:nth-child(even) { background: var(--gray1) }
+tbody td { padding: 8px 12px; border-bottom: 1px solid var(--gray2); vertical-align: top; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+tbody tr:hover td { background: var(--teal-lt) }
+tbody td.long { max-width: 300px; white-space: normal; line-height: 1.5 }
+.badge-row { display: inline-block; background: var(--teal-lt); color: var(--teal2); border-radius: 4px; padding: 1px 7px; font-size: .72rem }
+
+/* ── Search in preview ── */
+.preview-controls { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center }
+.preview-controls input { flex: 1; min-width: 180px; border: 1.5px solid var(--gray2); border-radius: 8px; padding: 8px 12px; font-size: .88rem; outline: none }
+.preview-controls input:focus { border-color: var(--teal) }
+.preview-controls select { border: 1.5px solid var(--gray2); border-radius: 8px; padding: 8px 12px; font-size: .88rem; outline: none; background: #fff }
+.page-info { font-size: .82rem; color: var(--gray3); white-space: nowrap }
+.btn-page { background: var(--gray1); border: 1px solid var(--gray2); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: .82rem }
+.btn-page:hover { background: var(--teal-lt); border-color: var(--teal); color: var(--teal) }
+.btn-page:disabled { opacity: .4; cursor: default }
+
+/* ── Edit modal ── */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; padding: 16px }
+.modal-bg.open { display: flex }
+.modal { background: #fff; border-radius: var(--radius); width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,.2) }
+.modal-head { padding: 16px 20px; border-bottom: 1px solid var(--gray2); display: flex; align-items: center; gap: 10px }
+.modal-head h3 { font-size: 1rem; flex: 1 }
+.btn-modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--gray3); line-height: 1 }
+.modal-body { padding: 20px }
+.field-group { margin-bottom: 14px }
+.field-group label { display: block; font-size: .78rem; font-weight: 700; color: var(--gray3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px }
+.field-group input, .field-group textarea, .field-group select {
+  width: 100%; border: 1.5px solid var(--gray2); border-radius: 8px; padding: 9px 12px; font-size: .88rem; font-family: inherit; outline: none; resize: vertical }
+.field-group input:focus, .field-group textarea:focus, .field-group select:focus { border-color: var(--teal) }
+.field-group textarea { min-height: 80px }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+.modal-foot { padding: 14px 20px; border-top: 1px solid var(--gray2); display: flex; gap: 10px; justify-content: flex-end }
+.btn-save   { background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 9px 22px; cursor: pointer; font-size: .88rem }
+.btn-save:hover { background: var(--teal2) }
+.btn-del    { background: #fff; color: var(--danger); border: 1.5px solid var(--danger); border-radius: 8px; padding: 9px 22px; cursor: pointer; font-size: .88rem }
+.btn-del:hover { background: #fef2f2 }
+.btn-cancel { background: var(--gray1); border: 1px solid var(--gray2); border-radius: 8px; padding: 9px 18px; cursor: pointer; font-size: .88rem }
+
+/* ── Add button ── */
+.btn-add { background: var(--ok); color: #fff; border: none; border-radius: 8px; padding: 9px 20px; cursor: pointer; font-size: .88rem; display: flex; align-items: center; gap: 6px }
+.btn-add:hover { background: #15803d }
+
+/* ── Download ── */
+.btn-dl { display: inline-flex; align-items: center; gap: 8px; background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 12px 28px; font-size: 1rem; cursor: pointer; font-weight: 700; transition: background .15s }
+.btn-dl:hover { background: var(--teal2) }
+.btn-dl:disabled { background: var(--gray2); color: var(--gray3); cursor: default }
+.btn-dl-secondary { background: #fff; color: var(--teal); border: 2px solid var(--teal); border-radius: 8px; padding: 10px 22px; font-size: .9rem; cursor: pointer; font-weight: 600 }
+.btn-dl-secondary:hover { background: var(--teal-lt) }
+
+/* ── Misc ── */
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap }
+.spacer { flex: 1 }
+.hidden { display: none }
+.text-ok   { color: var(--ok) }
+.text-warn { color: var(--warn) }
+
+@media (max-width: 600px) {
+  .field-grid { grid-template-columns: 1fr }
+  .stats-bar .stat-pill { min-width: 90px }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚙️</div>
+  <div>
+    <h1>藥品手冊管理後台</h1>
+    <p>上傳 Excel → 預覽確認 → 下載新的 drugs.json</p>
+  </div>
+  <a href="index.html" class="back-link">← 回查詢頁</a>
+</header>
+
+<main>
+
+  <!-- Step 1: Upload -->
+  <div class="step">
+    <div class="step-head">
+      <div class="step-num" id="s1num">1</div>
+      <div>
+        <div class="step-title">上傳藥品 Excel 檔</div>
+        <div class="step-sub">支援 .xlsx / .xls 格式，欄位需包含：藥品名稱、原廠名、學名名稱、大分類、小分類、劑量劑型、藥理、用法用量、注意事項、適應症、副作用、孕婦分級、備註欄</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="drop-zone" id="dropZone">
+        <div class="icon">📂</div>
+        <p>將 Excel 檔拖曳到這裡，或</p>
+        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">選擇檔案</button>
+        <input type="file" id="fileInput" accept=".xlsx,.xls">
+        <p style="margin-top:10px;font-size:.75rem;color:var(--gray3)" id="fileNameDisplay">尚未選擇檔案</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Preview & Edit -->
+  <div class="step" id="step2" style="display:none">
+    <div class="step-head">
+      <div class="step-num" id="s2num">2</div>
+      <div>
+        <div class="step-title">預覽與編輯</div>
+        <div class="step-sub">確認資料正確後可新增、編輯或刪除藥品，再進行下載</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div id="alertArea"></div>
+      <div class="stats-bar" id="statsBar"></div>
+      <div class="preview-controls">
+        <input type="search" id="previewSearch" placeholder="搜尋藥品名稱、學名…" oninput="filterPreview()">
+        <select id="previewCat" onchange="filterPreview()"><option value="">全部分類</option></select>
+        <button class="btn-add" onclick="openAddModal()">＋ 新增藥品</button>
+        <span class="spacer"></span>
+        <span class="page-info" id="pageInfo"></span>
+        <button class="btn-page" id="btnPrev" onclick="changePage(-1)">‹ 上頁</button>
+        <button class="btn-page" id="btnNext" onclick="changePage(1)">下頁 ›</button>
+      </div>
+      <div class="table-wrap">
+        <table id="previewTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>藥品名稱</th>
+              <th>原廠名</th>
+              <th>學名名稱</th>
+              <th>大分類</th>
+              <th>小分類</th>
+              <th>劑量劑型</th>
+              <th>適應症</th>
+              <th>孕婦分級</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Download -->
+  <div class="step" id="step3" style="display:none">
+    <div class="step-head">
+      <div class="step-num" id="s3num">3</div>
+      <div>
+        <div class="step-title">下載並更新網站</div>
+        <div class="step-sub">下載新的 drugs.json，上傳覆蓋到 GitHub Repository，網站即自動更新</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="alert alert-ok" style="margin-bottom:18px">
+        <span class="alert-icon">✅</span>
+        <div>資料已就緒，共 <strong id="readyCount">0</strong> 筆藥品。請下載後上傳至 GitHub 覆蓋原有的 <code>drugs.json</code>。</div>
+      </div>
+      <div class="row">
+        <button class="btn-dl" id="btnDownload" onclick="downloadJSON()">⬇ 下載 drugs.json</button>
+        <button class="btn-dl-secondary" onclick="window.open('index.html')">🔗 預覽查詢頁</button>
+      </div>
+      <div style="margin-top:20px;background:var(--gray1);border-radius:8px;padding:14px 16px;font-size:.83rem;line-height:1.8;color:var(--gray3)">
+        <strong style="color:var(--text)">上傳到 GitHub 的步驟：</strong><br>
+        1. 登入 GitHub → 進入你的 Repository<br>
+        2. 點擊 <code>drugs.json</code> 檔案 → 右上角鉛筆圖示 Edit → 選擇 <em>Upload files</em><br>
+        3. 拖曳剛才下載的 <code>drugs.json</code> → Commit changes<br>
+        4. 約 30 秒後網站自動更新完成
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Edit / Add Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">編輯藥品</h3>
+      <button class="btn-modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editIndex">
+      <div class="field-grid">
+        <div class="field-group">
+          <label>藥品名稱 *</label>
+          <input type="text" id="f_name" placeholder="商品名或主要學名">
+        </div>
+        <div class="field-group">
+          <label>原廠名 *</label>
+          <input type="text" id="f_brand" placeholder="原廠商品名">
+        </div>
+        <div class="field-group">
+          <label>學名名稱</label>
+          <input type="text" id="f_generic" placeholder="INN 學名">
+        </div>
+        <div class="field-group">
+          <label>劑量劑型</label>
+          <input type="text" id="f_form" placeholder="如：口服：500mg/Cap">
+        </div>
+        <div class="field-group">
+          <label>大分類</label>
+          <select id="f_cat">
+            <option value="">請選擇</option>
+            <option>化學治療劑</option>
+            <option>作用在中樞神經系統的藥物</option>
+            <option>作用在心臟血管系統的藥物</option>
+            <option>作用在肌肉骨骼系統的藥物</option>
+            <option>作用在呼吸道系統的藥物</option>
+            <option>作用在胃腸道的藥物</option>
+            <option>作用在泌尿系統的藥物</option>
+            <option>作用在內分泌腺的藥物</option>
+            <option>作用在血液系統的藥物</option>
+            <option>眼科用藥</option>
+            <option>皮膚用藥</option>
+            <option>耳鼻科用藥</option>
+            <option>維他命與礦物質</option>
+            <option>營養素、輸液和電解質</option>
+            <option>麻醉劑</option>
+            <option>疫苗</option>
+            <option>其他</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>次分類</label>
+          <input type="text" id="f_subcat" placeholder="如：青黴素類、β阻斷劑">
+        </div>
+        <div class="field-group">
+          <label>孕婦分級</label>
+          <input type="text" id="f_preg" placeholder="如：B、C、D">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>藥理</label>
+        <textarea id="f_pharma" placeholder="作用機轉、藥效說明…"></textarea>
+      </div>
+      <div class="field-group">
+        <label>適應症</label>
+        <textarea id="f_indication" placeholder="核准適應症…"></textarea>
+      </div>
+      <div class="field-group">
+        <label>用法用量</label>
+        <textarea id="f_dosage" placeholder="成人/兒童建議劑量…"></textarea>
+      </div>
+      <div class="field-group">
+        <label>注意事項</label>
+        <textarea id="f_caution" placeholder="禁忌、特殊族群注意…"></textarea>
+      </div>
+      <div class="field-group">
+        <label>副作用</label>
+        <textarea id="f_side" placeholder="常見及重大副作用…"></textarea>
+      </div>
+      <div class="field-group">
+        <label>備註欄</label>
+        <textarea id="f_note" placeholder="院內特殊規定、抗生素階梯等…" style="min-height:60px"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-del" id="btnDelete" onclick="deleteEntry()" style="display:none">🗑 刪除</button>
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-save" onclick="saveEntry()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// State
+// ─────────────────────────────────────────
+let allDrugs  = [];   // full dataset
+let viewDrugs = [];   // after filter
+let PAGE_SIZE = 30;
+let currentPage = 1;
+
+// ─────────────────────────────────────────
+// File upload & parse
+// ─────────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over') });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]) });
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+function handleFile(file) {
+  if (!file) return;
+  if (!file.name.match(/\.xlsx?$/i)) {
+    showAlert('alertArea','err','請上傳 .xlsx 或 .xls 格式的 Excel 檔案。');
+    return;
+  }
+  document.getElementById('fileNameDisplay').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => parseExcel(e.target.result);
+  reader.readAsArrayBuffer(file);
+}
+
+function parseExcel(buffer) {
+  try {
+    const wb = XLSX.read(buffer, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+    if (rows.length === 0) {
+      showAlert('alertArea','err','Excel 是空的或無法讀取，請確認格式。'); return;
+    }
+
+    const REQUIRED = ['藥品名稱','原廠名'];
+    const missing = REQUIRED.filter(k => !(k in rows[0]));
+    if (missing.length) {
+      showAlert('alertArea','err',`缺少必要欄位：${missing.join('、')}。請確認 Excel 第一列為欄位名稱。`);
+      return;
+    }
+
+    allDrugs = rows.map((r, i) => ({
+      id: i + 1,
+      藥品名稱: String(r['藥品名稱']||'').trim(),
+      原廠名:   String(r['原廠名']||'').trim(),
+      學名名稱: String(r['學名名稱']||'').trim(),
+      大分類:   String(r['大分類']||'').trim(),
+      小分類:   String(r['小分類']||'').trim(),
+      劑量劑型: String(r['劑量劑型']||'').trim(),
+      藥理:     String(r['藥理']||'').trim(),
+      用法用量: String(r['用法用量']||'').trim(),
+      注意事項: String(r['注意事項']||'').trim(),
+      適應症:   String(r['適應症']||'').trim(),
+      副作用:   String(r['副作用']||'').trim(),
+      孕婦分級: String(r['孕婦分級']||'').trim(),
+      備註欄:   String(r['備註欄']||'').trim(),
+    })).filter(d => d['藥品名稱']);
+
+    document.getElementById('s1num').classList.add('done');
+    document.getElementById('s1num').textContent = '✓';
+    showStep2();
+  } catch(e) {
+    showAlert('alertArea','err','解析 Excel 時發生錯誤：' + e.message);
+  }
+}
+
+// ─────────────────────────────────────────
+// Step 2: Preview
+// ─────────────────────────────────────────
+function showStep2() {
+  document.getElementById('step2').style.display = '';
+  document.getElementById('step3').style.display = '';
+  document.getElementById('alertArea').innerHTML = '';
+  buildCatFilter();
+  refreshStats();
+  filterPreview();
+  document.getElementById('step2').scrollIntoView({ behavior:'smooth' });
+}
+
+function buildCatFilter() {
+  const sel = document.getElementById('previewCat');
+  sel.innerHTML = '<option value="">全部分類</option>';
+  const cats = [...new Set(allDrugs.map(d => d['大分類']).filter(Boolean))].sort();
+  cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o) });
+}
+
+function refreshStats() {
+  const cats = new Set(allDrugs.map(d => d['大分類']).filter(Boolean));
+  const noName = allDrugs.filter(d => !d['原廠名']).length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-pill"><div class="num">${allDrugs.length}</div><div class="lbl">藥品總筆數</div></div>
+    <div class="stat-pill"><div class="num">${cats.size}</div><div class="lbl">藥品大分類</div></div>
+    <div class="stat-pill ${noName>0?'':''}"><div class="num ${noName>0?'text-warn':''}">${noName}</div><div class="lbl">缺原廠名</div></div>
+  `;
+  document.getElementById('readyCount').textContent = allDrugs.length;
+  document.getElementById('s2num').classList.add('done');
+  document.getElementById('s2num').textContent = '✓';
+  document.getElementById('s3num').classList.add('done');
+  document.getElementById('s3num').textContent = '✓';
+}
+
+function filterPreview() {
+  const kw  = document.getElementById('previewSearch').value.trim().toLowerCase();
+  const cat = document.getElementById('previewCat').value;
+  viewDrugs = allDrugs.filter(d => {
+    if (cat && d['大分類'] !== cat) return false;
+    if (kw) {
+      const h = [d['藥品名稱'], d['原廠名'], d['學名名稱'], d['適應症']].join(' ').toLowerCase();
+      if (!h.includes(kw)) return false;
+    }
+    return true;
+  });
+  currentPage = 1;
+  renderTable();
+}
+
+function changePage(delta) {
+  const maxPage = Math.ceil(viewDrugs.length / PAGE_SIZE) || 1;
+  currentPage = Math.min(maxPage, Math.max(1, currentPage + delta));
+  renderTable();
+}
+
+function renderTable() {
+  const total = viewDrugs.length;
+  const maxPage = Math.ceil(total / PAGE_SIZE) || 1;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const slice = viewDrugs.slice(start, start + PAGE_SIZE);
+
+  document.getElementById('pageInfo').textContent = `第 ${currentPage}/${maxPage} 頁，共 ${total} 筆`;
+  document.getElementById('btnPrev').disabled = currentPage <= 1;
+  document.getElementById('btnNext').disabled = currentPage >= maxPage;
+
+  document.getElementById('previewBody').innerHTML = slice.map(d => {
+    const idx = allDrugs.indexOf(d);
+    return `<tr>
+      <td>${d.id}</td>
+      <td><strong>${esc(d['藥品名稱'])}</strong></td>
+      <td>${esc(d['原廠名'])}</td>
+      <td>${esc(trunc(d['學名名稱'],30))}</td>
+      <td><span class="badge-row">${esc(d['大分類']||'—')}</span></td>
+      <td>${esc(d['小分類']||'—')}</td>
+      <td>${esc(trunc(d['劑量劑型'],25))}</td>
+      <td class="long">${esc(trunc(d['適應症'],60))}</td>
+      <td>${esc(d['孕婦分級']||'—')}</td>
+      <td><button onclick="openEditModal(${idx})" style="background:var(--teal-lt);border:none;color:var(--teal2);border-radius:5px;padding:4px 10px;cursor:pointer;font-size:.78rem">✏️ 編輯</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────
+// Modal: Add / Edit
+// ─────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = '新增藥品';
+  document.getElementById('editIndex').value = '-1';
+  document.getElementById('btnDelete').style.display = 'none';
+  clearModal();
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function openEditModal(idx) {
+  const d = allDrugs[idx];
+  document.getElementById('modalTitle').textContent = `編輯：${d['藥品名稱']}`;
+  document.getElementById('editIndex').value = idx;
+  document.getElementById('btnDelete').style.display = '';
+  document.getElementById('f_name').value       = d['藥品名稱']||'';
+  document.getElementById('f_brand').value      = d['原廠名']||'';
+  document.getElementById('f_generic').value    = d['學名名稱']||'';
+  document.getElementById('f_form').value       = d['劑量劑型']||'';
+  document.getElementById('f_cat').value        = d['大分類']||'';
+  document.getElementById('f_subcat').value     = d['小分類']||'';
+  document.getElementById('f_preg').value       = d['孕婦分級']||'';
+  document.getElementById('f_pharma').value     = d['藥理']||'';
+  document.getElementById('f_indication').value = d['適應症']||'';
+  document.getElementById('f_dosage').value     = d['用法用量']||'';
+  document.getElementById('f_caution').value    = d['注意事項']||'';
+  document.getElementById('f_side').value       = d['副作用']||'';
+  document.getElementById('f_note').value       = d['備註欄']||'';
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalBg').classList.remove('open') }
+
+function clearModal() {
+  ['f_name','f_brand','f_generic','f_form','f_subcat','f_preg',
+   'f_pharma','f_indication','f_dosage','f_caution','f_side','f_note'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f_cat').value = '';
+}
+
+function saveEntry() {
+  const name  = document.getElementById('f_name').value.trim();
+  const brand = document.getElementById('f_brand').value.trim();
+  if (!name || !brand) {
+    alert('「藥品名稱」與「原廠名」為必填欄位。'); return;
+  }
+  const entry = {
+    藥品名稱: name,
+    原廠名:   brand,
+    學名名稱: document.getElementById('f_generic').value.trim(),
+    劑量劑型: document.getElementById('f_form').value.trim(),
+    大分類:   document.getElementById('f_cat').value,
+    小分類:   document.getElementById('f_subcat').value.trim(),
+    孕婦分級: document.getElementById('f_preg').value.trim(),
+    藥理:     document.getElementById('f_pharma').value.trim(),
+    適應症:   document.getElementById('f_indication').value.trim(),
+    用法用量: document.getElementById('f_dosage').value.trim(),
+    注意事項: document.getElementById('f_caution').value.trim(),
+    副作用:   document.getElementById('f_side').value.trim(),
+    備註欄:   document.getElementById('f_note').value.trim(),
+  };
+
+  const idx = +document.getElementById('editIndex').value;
+  if (idx === -1) {
+    entry.id = allDrugs.length ? Math.max(...allDrugs.map(d=>d.id)) + 1 : 1;
+    allDrugs.push(entry);
+  } else {
+    entry.id = allDrugs[idx].id;
+    allDrugs[idx] = entry;
+  }
+
+  closeModal();
+  buildCatFilter();
+  refreshStats();
+  filterPreview();
+}
+
+function deleteEntry() {
+  const idx = +document.getElementById('editIndex').value;
+  if (idx < 0) return;
+  if (!confirm(`確定要刪除「${allDrugs[idx]['藥品名稱']}」嗎？此動作無法復原。`)) return;
+  allDrugs.splice(idx, 1);
+  // Re-number IDs
+  allDrugs.forEach((d, i) => d.id = i + 1);
+  closeModal();
+  buildCatFilter();
+  refreshStats();
+  filterPreview();
+}
+
+// ─────────────────────────────────────────
+// Download
+// ─────────────────────────────────────────
+function downloadJSON() {
+  const json = JSON.stringify(allDrugs, null, 0);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'drugs.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────
+function showAlert(containerId, type, msg) {
+  const icons = { ok:'✅', warn:'⚠️', err:'❌' };
+  document.getElementById(containerId).innerHTML =
+    `<div class="alert alert-${type}"><span class="alert-icon">${icons[type]}</span><div>${msg}</div></div>`;
+}
+function trunc(s, n) { return s && s.length > n ? s.slice(0,n)+'…' : (s||'') }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+// Close modal on background click
+document.getElementById('modalBg').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>

@@ -213,24 +213,37 @@ tbody td.long { max-width: 300px; white-space: normal; line-height: 1.5 }
       <div class="step-num" id="s3num">3</div>
       <div>
         <div class="step-title">下載並更新網站</div>
-        <div class="step-sub">下載新的 drugs.json，上傳覆蓋到 GitHub Repository，網站即自動更新</div>
+        <div class="step-sub">同時下載 drugs.json（給網站用）與 Excel（留存備用），下次更新再上傳最新的 Excel 即可</div>
       </div>
     </div>
     <div class="step-body">
       <div class="alert alert-ok" style="margin-bottom:18px">
         <span class="alert-icon">✅</span>
-        <div>資料已就緒，共 <strong id="readyCount">0</strong> 筆藥品。請下載後上傳至 GitHub 覆蓋原有的 <code>drugs.json</code>。</div>
+        <div>資料已就緒，共 <strong id="readyCount">0</strong> 筆藥品。請下載兩個檔案：<code>drugs.json</code> 上傳 GitHub 更新網站；<code>藥品手冊.xlsx</code> 留存備用，下次直接上傳這份即可。</div>
       </div>
-      <div class="row">
-        <button class="btn-dl" id="btnDownload" onclick="downloadJSON()">⬇ 下載 drugs.json</button>
-        <button class="btn-dl-secondary" onclick="window.open('index.html')">🔗 預覽查詢頁</button>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:stretch;margin-bottom:20px">
+        <div style="flex:1;min-width:220px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:16px 18px">
+          <div style="font-weight:700;font-size:.9rem;margin-bottom:6px;color:#15803d">① 給網站用</div>
+          <div style="font-size:.8rem;color:#4a5760;margin-bottom:12px;line-height:1.6">上傳覆蓋到 GitHub Repository 的 <code>drugs.json</code>，網站即自動更新</div>
+          <button class="btn-dl" onclick="downloadJSON()" style="width:100%;justify-content:center">⬇ 下載 drugs.json</button>
+        </div>
+        <div style="flex:1;min-width:220px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:16px 18px">
+          <div style="font-weight:700;font-size:.9rem;margin-bottom:6px;color:#1d4ed8">② 留存備用</div>
+          <div style="font-size:.8rem;color:#4a5760;margin-bottom:12px;line-height:1.6">儲存為最新版 Excel，下次更新時直接上傳這份，不會再出現資料落差</div>
+          <button class="btn-dl" onclick="downloadExcel()" style="width:100%;justify-content:center;background:#1d4ed8">⬇ 下載 藥品手冊.xlsx</button>
+        </div>
       </div>
-      <div style="margin-top:20px;background:var(--gray1);border-radius:8px;padding:14px 16px;font-size:.83rem;line-height:1.8;color:var(--gray3)">
-        <strong style="color:var(--text)">上傳到 GitHub 的步驟：</strong><br>
+
+      <div style="background:var(--gray1);border-radius:8px;padding:14px 16px;font-size:.83rem;line-height:1.8;color:var(--gray3)">
+        <strong style="color:var(--text)">上傳 drugs.json 到 GitHub 的步驟：</strong><br>
         1. 登入 GitHub → 進入你的 Repository<br>
         2. 點擊 <code>drugs.json</code> 檔案 → 右上角鉛筆圖示 Edit → 選擇 <em>Upload files</em><br>
         3. 拖曳剛才下載的 <code>drugs.json</code> → Commit changes<br>
         4. 約 30 秒後網站自動更新完成
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn-dl-secondary" onclick="window.open('index.html')">🔗 預覽查詢頁</button>
       </div>
     </div>
   </div>
@@ -268,7 +281,20 @@ tbody td.long { max-width: 300px; white-space: normal; line-height: 1.5 }
           <select id="f_cat">
             <option value="">請選擇</option>
             <option>化學治療劑</option>
+            <option>頭孢子菌類</option>
+            <option>四環素</option>
+            <option>巨環類</option>
+            <option>胺基配糖體</option>
+            <option>其他類抗生素</option>
+            <option>抗結核劑</option>
+            <option>抗濾過性病毒</option>
+            <option>抗滴蟲和抗念珠球菌</option>
+            <option>磺胺藥</option>
             <option>作用在中樞神經系統的藥物</option>
+            <option>抗巴金森症的藥物</option>
+            <option>抗驚厥劑</option>
+            <option>抗憂鬱劑</option>
+            <option>腦代謝改善劑</option>
             <option>作用在心臟血管系統的藥物</option>
             <option>作用在肌肉骨骼系統的藥物</option>
             <option>作用在呼吸道系統的藥物</option>
@@ -278,10 +304,12 @@ tbody td.long { max-width: 300px; white-space: normal; line-height: 1.5 }
             <option>作用在血液系統的藥物</option>
             <option>眼科用藥</option>
             <option>皮膚用藥</option>
+            <option>疥蟲藥和滅蝨藥</option>
             <option>耳鼻科用藥</option>
             <option>維他命與礦物質</option>
             <option>營養素、輸液和電解質</option>
             <option>麻醉劑</option>
+            <option>局部麻醉劑</option>
             <option>疫苗</option>
             <option>其他</option>
           </select>
@@ -587,6 +615,55 @@ function downloadJSON() {
   const a    = document.createElement('a');
   a.href = url; a.download = 'drugs.json'; a.click();
   URL.revokeObjectURL(url);
+}
+
+function downloadExcel() {
+  const COLS = ['編號','大分類','小分類','藥品名稱','原廠名','學名名稱','劑量劑型','藥理','用法用量','注意事項','適應症','副作用','孕婦分級','備註欄'];
+  const rows = allDrugs.map(d => ({
+    '編號':   d.id,
+    '大分類': d['大分類']  || '',
+    '小分類': d['小分類']  || '',
+    '藥品名稱': d['藥品名稱'] || '',
+    '原廠名': d['原廠名']  || '',
+    '學名名稱': d['學名名稱'] || '',
+    '劑量劑型': d['劑量劑型'] || '',
+    '藥理':   d['藥理']    || '',
+    '用法用量': d['用法用量'] || '',
+    '注意事項': d['注意事項'] || '',
+    '適應症': d['適應症']  || '',
+    '副作用': d['副作用']  || '',
+    '孕婦分級': d['孕婦分級'] || '',
+    '備註欄': d['備註欄']  || '',
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows, { header: COLS });
+
+  // Column widths
+  ws['!cols'] = [
+    {wch:6},{wch:18},{wch:14},{wch:18},{wch:16},{wch:22},
+    {wch:20},{wch:40},{wch:40},{wch:40},{wch:40},{wch:30},{wch:10},{wch:30}
+  ];
+
+  // Header style (xlsx.full.min supports basic styling)
+  const headerRange = XLSX.utils.decode_range(ws['!ref']);
+  for (let c = headerRange.s.c; c <= headerRange.e.c; c++) {
+    const cell = ws[XLSX.utils.encode_cell({r:0, c})];
+    if (cell) {
+      cell.s = {
+        font: { bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '0A5F55' } },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+      };
+    }
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, '藥品手冊');
+
+  // Generate timestamp for filename
+  const now = new Date();
+  const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb, `藥品手冊_${ts}.xlsx`);
 }
 
 // ─────────────────────────────────────────

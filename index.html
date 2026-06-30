@@ -242,6 +242,7 @@ let currentGroup = '';
 let currentAlpha = '';
 
 function getGroup(d){
+  if(!d.cat) return '';
   const m = d.cat.match(/^(\d+)\./);
   return m ? m[1] : '';
 }

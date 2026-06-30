@@ -3,385 +3,382 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>本院藥品手冊 115 年版</title>
+<title>本院用藥查詢系統</title>
 <style>
-  :root {
-    --teal:   #0d7a6e;
-    --teal2:  #0a5f55;
-    --teal-lt:#e8f5f3;
-    --accent: #e8734a;
-    --gray1:  #f4f6f8;
-    --gray2:  #e2e8ed;
-    --gray3:  #8a96a0;
-    --text:   #1e2a30;
-    --card-shadow: 0 2px 8px rgba(0,0,0,.08);
-    --radius: 10px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Noto Sans TC','Microsoft JhengHei',Arial,sans-serif;background:var(--gray1);color:var(--text);min-height:100vh}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:#f5f5f5;color:#1a1a1a;font-size:14px}
+header{background:#1a4f8a;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+header h1{font-size:18px;font-weight:500}
+header span{font-size:12px;opacity:.75;margin-left:auto}
+.layout{display:flex;min-height:calc(100vh - 52px)}
+.sidebar{width:220px;background:#fff;border-right:1px solid #e0e0e0;flex-shrink:0;overflow-y:auto;padding:12px 0}
+.sidebar h3{font-size:11px;font-weight:600;color:#888;letter-spacing:.8px;text-transform:uppercase;padding:8px 16px 4px}
+.sidebar-item{display:flex;justify-content:space-between;align-items:center;padding:7px 16px;cursor:pointer;transition:background .12s;font-size:13px;color:#444;border-left:3px solid transparent}
+.sidebar-item:hover{background:#f0f4fa;color:#1a4f8a}
+.sidebar-item.active{background:#e8f0fb;color:#1a4f8a;border-left-color:#1a4f8a;font-weight:500}
+.sidebar-item .cnt{font-size:11px;color:#aaa;background:#f0f0f0;border-radius:10px;padding:1px 7px}
+.sidebar-item.active .cnt{background:#c8d9f5;color:#1a4f8a}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.toolbar{background:#fff;padding:12px 20px;border-bottom:1px solid #e0e0e0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.toolbar input,.toolbar select{height:36px;border:1px solid #d0d0d0;border-radius:6px;padding:0 12px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s}
+.toolbar input:focus,.toolbar select:focus{border-color:#1a4f8a;box-shadow:0 0 0 3px rgba(26,79,138,.1)}
+#kw{flex:1;min-width:160px}
+#ind{width:200px}
+#cat{width:220px}
+.badge-preg{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
+.preg-A,.preg-B{background:#d4edda;color:#155724}
+.preg-C{background:#fff3cd;color:#856404}
+.preg-D,.preg-X{background:#f8d7da;color:#721c24}
 
-  /* ── Header ── */
-  header{background:linear-gradient(135deg,var(--teal2) 0%,var(--teal) 100%);color:#fff;padding:20px 24px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
-  .header-row{display:flex;align-items:center;gap:14px;max-width:1200px;margin:0 auto}
-  .logo{width:44px;height:44px;background:rgba(255,255,255,.18);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-  .header-text h1{font-size:1.15rem;font-weight:700;letter-spacing:.5px}
-  .header-text p{font-size:.78rem;opacity:.78;margin-top:2px}
-  .drug-count{margin-left:auto;background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:.8rem;white-space:nowrap;flex-shrink:0}
-
-  /* ── Search bar ── */
-  .search-wrap{background:#fff;border-bottom:1px solid var(--gray2);padding:14px 16px;position:sticky;top:82px;z-index:99}
-  .search-inner{max-width:1200px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap}
-  .search-box{flex:1;min-width:200px;display:flex;align-items:center;background:var(--gray1);border:1.5px solid var(--gray2);border-radius:8px;padding:0 12px;gap:8px}
-  .search-box:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,122,110,.12)}
-  .search-icon{color:var(--gray3);font-size:1rem;flex-shrink:0}
-  .search-box input{border:none;background:transparent;outline:none;padding:10px 0;font-size:.95rem;width:100%;color:var(--text)}
-  .search-box input::placeholder{color:var(--gray3)}
-
-  .filter-row{display:flex;gap:8px;flex-wrap:wrap;width:100%}
-  select{background:var(--gray1);border:1.5px solid var(--gray2);border-radius:8px;padding:8px 12px;font-size:.88rem;color:var(--text);cursor:pointer;outline:none;flex:1;min-width:140px}
-  select:focus{border-color:var(--teal)}
-  .btn-clear{background:transparent;border:1.5px solid var(--gray2);border-radius:8px;padding:8px 16px;font-size:.85rem;cursor:pointer;color:var(--gray3);white-space:nowrap}
-  .btn-clear:hover{border-color:var(--accent);color:var(--accent)}
-
-  /* ── Result bar ── */
-  .result-bar{max-width:1200px;margin:14px auto 0;padding:0 4px;display:flex;align-items:center;gap:8px;font-size:.84rem;color:var(--gray3)}
-  .result-bar strong{color:var(--teal);font-size:1rem}
-  .tag-list{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
-  .tag{background:var(--teal-lt);color:var(--teal2);border-radius:20px;padding:2px 10px;font-size:.78rem;cursor:pointer}
-  .tag:hover{background:var(--teal);color:#fff}
-
-  /* ── Layout ── */
-  main{max-width:1200px;margin:0 auto;padding:16px}
-
-  /* ── Drug cards ── */
-  .cards{display:grid;gap:12px}
-  @media(min-width:700px){.cards{grid-template-columns:1fr 1fr}}
-  @media(min-width:1050px){.cards{grid-template-columns:1fr 1fr 1fr}}
-
-  .card{background:#fff;border-radius:var(--radius);box-shadow:var(--card-shadow);overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;border:1.5px solid transparent}
-  .card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.12);border-color:var(--teal)}
-  .card.open{border-color:var(--teal);box-shadow:0 4px 16px rgba(13,122,110,.15)}
-
-  .card-head{padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-  .card-name{font-size:1rem;font-weight:700;color:var(--teal2);line-height:1.3}
-  .card-brand{font-size:.8rem;color:var(--gray3);margin-top:3px}
-  .card-badge{flex-shrink:0;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
-  .badge{display:inline-block;border-radius:5px;padding:2px 8px;font-size:.72rem;font-weight:600;white-space:nowrap}
-  .badge-cat{background:var(--teal-lt);color:var(--teal2)}
-  .badge-sub{background:#fff3ee;color:#b85c2a}
-  .badge-preg{background:#fdf4e7;color:#9a6200}
-  
-  .card-preview{padding:0 16px 12px;font-size:.82rem;color:#4a5760;line-height:1.55;border-top:1px solid var(--gray2);padding-top:10px}
-  .preview-item{margin-bottom:4px}
-  .preview-label{font-weight:600;color:var(--gray3);font-size:.75rem;text-transform:uppercase;letter-spacing:.4px}
-
-  /* ── Drug detail panel ── */
-  .detail-panel{display:none;padding:0 16px 16px}
-  .card.open .detail-panel{display:block}
-  .card.open .card-preview{display:none}
-
-  .detail-section{margin-bottom:14px;border-top:1px solid var(--gray2);padding-top:12px}
-  .detail-section:first-child{border-top:none;padding-top:0}
-  .detail-label{font-size:.72rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
-  .detail-val{font-size:.87rem;line-height:1.7;color:var(--text)}
-  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .detail-grid .detail-section{border-top:none;padding-top:0}
-  .highlight{background:#fff9c4;border-radius:3px;padding:0 2px}
-
-  .btn-close{display:block;margin:12px auto 0;background:var(--teal);color:#fff;border:none;border-radius:8px;padding:8px 24px;cursor:pointer;font-size:.88rem}
-  .btn-close:hover{background:var(--teal2)}
-
-  /* ── Empty state ── */
-  .empty{text-align:center;padding:60px 20px;color:var(--gray3)}
-  .empty .icon{font-size:3rem;margin-bottom:12px}
-  .empty p{font-size:.95rem}
-
-  /* ── Loading ── */
-  .loading{text-align:center;padding:60px;color:var(--gray3);font-size:.95rem}
-  .spinner{width:36px;height:36px;border:3px solid var(--gray2);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  /* ── Footer ── */
-  footer{text-align:center;padding:24px;font-size:.78rem;color:var(--gray3);border-top:1px solid var(--gray2);margin-top:24px}
-
-  /* ── Mobile tweaks ── */
-  @media(max-width:480px){
-    header{padding:14px 16px 12px}
-    .header-text h1{font-size:1rem}
-    .search-wrap{padding:12px}
-    main{padding:10px}
-    .detail-grid{grid-template-columns:1fr}
-  }
+.results-bar{padding:8px 20px;font-size:12px;color:#888;border-bottom:1px solid #eee;background:#fafafa}
+.drug-list{flex:1;overflow-y:auto;padding:12px 20px}
+.drug-card{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s;display:flex;gap:14px;align-items:flex-start}
+.drug-card:hover{border-color:#1a4f8a;box-shadow:0 2px 8px rgba(26,79,138,.1)}
+.drug-card.selected{border-color:#1a4f8a;border-width:2px;background:#fafcff}
+.drug-id{width:36px;height:36px;background:#e8f0fb;color:#1a4f8a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.drug-body{flex:1;min-width:0}
+.drug-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.drug-name{font-weight:600;font-size:14px;color:#1a1a1a}
+.drug-cname{font-size:13px;color:#444}
+.drug-generic{font-size:11px;color:#888}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;background:#f0f0f0;color:#555}
+.tag-cat{background:#e8f0fb;color:#1a4f8a}
+.indication-preview{font-size:12px;color:#666;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{padding:4rem;text-align:center;color:#aaa}
+.detail-panel{position:fixed;top:0;right:-520px;width:520px;height:100vh;background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,.12);overflow-y:auto;z-index:200;transition:right .25s ease;display:flex;flex-direction:column}
+.detail-panel.open{right:0}
+.detail-header{background:#1a4f8a;color:#fff;padding:16px 20px;position:sticky;top:0;z-index:10}
+.detail-title{font-size:16px;font-weight:600;margin-bottom:2px}
+.detail-sub{font-size:12px;opacity:.8}
+.detail-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:18px;line-height:28px;text-align:center}
+.detail-close:hover{background:rgba(255,255,255,.3)}
+.detail-body{padding:20px;flex:1}
+.detail-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.field{margin-bottom:16px;border-bottom:1px solid #f0f0f0;padding-bottom:14px}
+.field:last-child{border-bottom:none}
+.field-label{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.field-val{font-size:13px;color:#222;line-height:1.7}
+.field-val.warn{color:#cc6600}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:100;display:none}
+.overlay.show{display:block}
+.alpha-bar{display:flex;gap:4px;flex-wrap:wrap;padding:8px 16px}
+.alpha-btn{padding:4px 8px;font-size:12px;border:1px solid #e0e0e0;border-radius:4px;cursor:pointer;background:#fff;color:#444;transition:all .12s}
+.alpha-btn:hover{border-color:#1a4f8a;color:#1a4f8a}
+.alpha-btn.active{background:#1a4f8a;color:#fff;border-color:#1a4f8a}
+@media(max-width:700px){
+  .sidebar{display:none}
+  .detail-panel{width:100vw}
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-row">
-    <div class="logo">💊</div>
-    <div class="header-text">
-      <h1>本院藥品手冊</h1>
-      <p>115 年版 — 院內用藥查詢系統</p>
-    </div>
-    <div class="drug-count" id="totalCount">載入中…</div>
-  </div>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+  <h1>本院用藥查詢系統</h1>
+  <span id="total-badge">載入中…</span>
 </header>
 
-<div class="search-wrap">
-  <div class="search-inner">
-    <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input type="search" id="searchInput" placeholder="搜尋藥品名稱、學名、原廠名、適應症、副作用…" autocomplete="off">
+<div class="layout">
+  <div class="sidebar" id="sidebar">
+    <h3>藥品分類</h3>
+    <div class="sidebar-item active" data-group="" onclick="setGroup(this)">
+      全部藥品 <span class="cnt" id="cnt-all">0</span>
     </div>
-    <div class="filter-row">
-      <select id="catFilter">
-        <option value="">全部分類</option>
-      </select>
-      <select id="subcatFilter">
-        <option value="">全部次分類</option>
-      </select>
-      <select id="formFilter">
-        <option value="">全部劑型</option>
-        <option value="口服">口服</option>
-        <option value="注射">注射劑</option>
-        <option value="外用">外用</option>
-        <option value="吸入">吸入劑</option>
-        <option value="眼藥">眼藥</option>
-        <option value="耳藥">耳藥</option>
-      </select>
-      <button class="btn-clear" onclick="clearFilters()">✕ 清除篩選</button>
-    </div>
+    <div id="group-list"></div>
   </div>
-  <div class="result-bar" id="resultBar"></div>
+
+  <div class="main">
+    <div class="toolbar">
+      <input type="text" id="kw" placeholder="🔍 藥品名稱、學名、商品名、適應症…" oninput="render()">
+      <input type="text" id="ind" style="display:none" oninput="render()">
+      <select id="cat" onchange="render()">
+        <option value="">全部細項分類</option>
+        <option value="01.01青黴素類">01.01青黴素類</option>
+<option value="01.02頭孢子菌類">01.02頭孢子菌類</option>
+<option value="01.02頭孢子菌類(丙醯胺)">01.02頭孢子菌類(丙醯胺)</option>
+<option value="01.03四環素">01.03四環素</option>
+<option value="01.04巨環類">01.04巨環類</option>
+<option value="01.05胺基配糖體">01.05胺基配糖體</option>
+<option value="01.06多類">01.06多類</option>
+<option value="01.07恩菎類">01.07恩菎類</option>
+<option value="01.08磺胺藥">01.08磺胺藥</option>
+<option value="01.10其他類抗生素">01.10其他類抗生素</option>
+<option value="01.11抗結核劑">01.11抗結核劑</option>
+<option value="01.16抗滴蟲和抗念珠球菌">01.16抗滴蟲和抗念珠球菌</option>
+<option value="01.17疥蟲藥和滅蝨藥">01.17疥蟲藥和滅蝨藥</option>
+<option value="01.19抗濾過性病毒">01.19抗濾過性病毒</option>
+<option value="01.19抗濾過性病毒藥">01.19抗濾過性病毒藥</option>
+<option value="02.02安眠藥">02.02安眠藥</option>
+<option value="02.03抗精神病藥物">02.03抗精神病藥物</option>
+<option value="02.04抗焦慮的藥物">02.04抗焦慮的藥物</option>
+<option value="02.05抗憂鬱劑">02.05抗憂鬱劑</option>
+<option value="02.06抗驚厥劑">02.06抗驚厥劑</option>
+<option value="02.07抗巴金森症的藥物">02.07抗巴金森症的藥物</option>
+<option value="02.07抗帕金森症的藥物">02.07抗帕金森症的藥物</option>
+<option value="02.09失智症治療劑">02.09失智症治療劑</option>
+<option value="02.11腦代謝改善劑">02.11腦代謝改善劑</option>
+<option value="03.01全身麻醉劑">03.01全身麻醉劑</option>
+<option value="03.02局部麻醉劑">03.02局部麻醉劑</option>
+<option value="04.01麻醉性止痛劑">04.01麻醉性止痛劑</option>
+<option value="04.02非類固醇類抗發炎劑">04.02非類固醇類抗發炎劑</option>
+<option value="04.04膽鹼作用劑">04.04膽鹼作用劑</option>
+<option value="04.05骨骼肌鬆弛劑">04.05骨骼肌鬆弛劑</option>
+<option value="05.01強心劑">05.01強心劑</option>
+<option value="05.02抗心律不整藥物">05.02抗心律不整藥物</option>
+<option value="05.03抗高血壓的藥物">05.03抗高血壓的藥物</option>
+<option value="05.04抗狹心症藥物(冠狀血管擴張劑)">05.04抗狹心症藥物(冠狀血管擴張劑)</option>
+<option value="05.05降血脂藥物">05.05降血脂藥物</option>
+<option value="05.06低血壓和休克治療劑">05.06低血壓和休克治療劑</option>
+<option value="05.07末梢血管擴張劑">05.07末梢血管擴張劑</option>
+<option value="06.01抗貧血的藥物">06.01抗貧血的藥物</option>
+<option value="06.02抗凝血劑">06.02抗凝血劑</option>
+<option value="06.03抗血小板製劑和血栓">06.03抗血小板製劑和血栓</option>
+<option value="06.03抗血小板製劑和血栓溶解劑">06.03抗血小板製劑和血栓溶解劑</option>
+<option value="06.04止血劑">06.04止血劑</option>
+<option value="06.05代用血漿,造血細胞因子和血液透析">06.05代用血漿,造血細胞因子和血液透析</option>
+<option value="07.01利尿劑">07.01利尿劑</option>
+<option value="07.02泌尿系統疾病的治療劑">07.02泌尿系統疾病的治療劑</option>
+<option value="08.01制酸劑和抗發脹劑">08.01制酸劑和抗發脹劑</option>
+<option value="08.02消化性潰瘍癒合劑">08.02消化性潰瘍癒合劑</option>
+<option value="08.03解痙劑">08.03解痙劑</option>
+<option value="08.04消化劑和利膽劑">08.04消化劑和利膽劑</option>
+<option value="08.05緩瀉劑">08.05緩瀉劑</option>
+<option value="08.06抗腹瀉劑">08.06抗腹瀉劑</option>
+<option value="08.07催吐劑和鎮吐劑(動暈症治療劑)">08.07催吐劑和鎮吐劑(動暈症治療劑)</option>
+<option value="08.08肝病治療劑">08.08肝病治療劑</option>
+<option value="09.01鎮咳藥">09.01鎮咳藥</option>
+<option value="09.03痰液溶解劑">09.03痰液溶解劑</option>
+<option value="09.04支氣管擴張劑和抗氣喘藥物">09.04支氣管擴張劑和抗氣喘藥物</option>
+<option value="09.06耳鼻科用藥">09.06耳鼻科用藥</option>
+<option value="10.02甲狀腺激素和抗甲狀腺的藥物">10.02甲狀腺激素和抗甲狀腺的藥物</option>
+<option value="10.03骨質疏鬆治療劑">10.03骨質疏鬆治療劑</option>
+<option value="10.04抗糖尿病和昇血糖藥物">10.04抗糖尿病和昇血糖藥物</option>
+<option value="10.05腎上腺皮質類固醇">10.05腎上腺皮質類固醇</option>
+<option value="10.06雌激素和黃體激素">10.06雌激素和黃體激素</option>
+<option value="10.08雄激素和同化類固醇">10.08雄激素和同化類固醇</option>
+<option value="11.01抗組織胺">11.01抗組織胺</option>
+<option value="11.03疫苗">11.03疫苗</option>
+<option value="11.04類毒素">11.04類毒素</option>
+<option value="12.01水溶性維他命">12.01水溶性維他命</option>
+<option value="13.02非經腸營養素製劑">13.02非經腸營養素製劑</option>
+<option value="14.01皮膚用藥">14.01皮膚用藥</option>
+<option value="14.02痤瘡藥物">14.02痤瘡藥物</option>
+<option value="14.03痔瘡治療劑">14.03痔瘡治療劑</option>
+<option value="15.01眼科用藥">15.01眼科用藥</option>
+<option value="15.02青光眼治療劑">15.02青光眼治療劑</option>
+<option value="15.03其他眼科用藥">15.03其他眼科用藥</option>
+<option value="16.01解毒劑">16.01解毒劑</option>
+<option value="16.05其它">16.05其它</option>
+      </select>
+    </div>
+    <div class="alpha-bar" id="alpha-bar"></div>
+    <div class="results-bar" id="results-bar">載入中…</div>
+    <div class="drug-list" id="drug-list"></div>
+  </div>
 </div>
 
-<main>
-  <div class="loading" id="loadingEl">
-    <div class="spinner"></div>
-    載入藥品資料中…
+<div class="overlay" id="overlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-header">
+    <div class="detail-title" id="dp-title"></div>
+    <div class="detail-sub" id="dp-sub"></div>
+    <button class="detail-close" onclick="closeDetail()">×</button>
   </div>
-  <div class="cards" id="cardContainer" style="display:none"></div>
-  <div class="empty" id="emptyEl" style="display:none">
-    <div class="icon">🔎</div>
-    <p>找不到符合條件的藥品，請嘗試其他關鍵字或調整篩選條件</p>
-  </div>
-</main>
+  <div class="detail-body" id="dp-body"></div>
+</div>
 
-<footer>
-  本院藥品手冊 115 年版 · 僅供院內醫療人員查閱參考 · 資料如有更新請洽藥劑科
-  &nbsp;·&nbsp; <a href="admin.html" style="color:var(--gray3);text-decoration:none">管理後台</a>
+<footer style="text-align:center;padding:24px 16px 16px;border-top:1px solid #eee;background:#fafafa;margin-top:auto">
+  <a href="admin.html" style="font-size:11px;color:#bbb;text-decoration:none" onmouseover="this.style.color='#999'" onmouseout="this.style.color='#bbb'">後台管理</a>
 </footer>
 
 <script>
 let DRUGS = [];
-let filteredDrugs = [];
-let openCardId = null;
 
-// ── Load data ──
+const FIELD_MAP = {
+  "識別碼": "id", "藥品": "drug", "藥品名稱": "name", "學名名稱": "generic",
+  "原廠名": "brand", "藥品中文名": "cname", "商品名": "trade",
+  "索引1": "idx1", "索引2": "idx2", "索引3": "idx3", "藥理": "pharm",
+  "用法用量": "dosage", "適應症": "indication", "孕婦分級": "preg",
+  "外觀": "appearance", "藥理作用": "cat", "副作用": "sideEffect",
+  "注意事項": "caution", "備註欄": "note"
+};
+
+function mapDrug(raw){
+  const d = {};
+  for(const key in raw){
+    const mapped = FIELD_MAP[key] || key;
+    d[mapped] = raw[key];
+  }
+  return d;
+}
+
+function startApp(){
+  buildSidebar();
+  render();
+  document.getElementById('total-badge').textContent = `共 ${DRUGS.length} 筆藥品`;
+}
+
 fetch('drugs.json')
-  .then(r => r.json())
-  .then(data => {
-    DRUGS = data;
-    document.getElementById('totalCount').textContent = `共 ${DRUGS.length} 筆藥品`;
-    buildFilters();
-    render(DRUGS);
-    document.getElementById('loadingEl').style.display = 'none';
-    document.getElementById('cardContainer').style.display = 'grid';
+  .then(r => {
+    if(!r.ok) throw new Error('無法讀取 drugs.json (HTTP ' + r.status + ')');
+    return r.json();
   })
-  .catch(e => {
-    document.getElementById('loadingEl').innerHTML = '⚠️ 無法載入藥品資料，請確認 drugs.json 是否存在';
+  .then(data => {
+    DRUGS = data.map(mapDrug);
+    startApp();
+  })
+  .catch(err => {
+    document.getElementById('total-badge').textContent = '載入失敗';
+    document.getElementById('drug-list').innerHTML =
+      `<div class="empty">藥品資料載入失敗：${err.message}<br>請確認 drugs.json 與 index.html 放在同一個資料夾，並透過網頁伺服器（例如 GitHub Pages）開啟。<br>若是在本機直接用瀏覽器開啟檔案，請改用 index_standalone.html。</div>`;
   });
 
-// ── Build category selects ──
-function buildFilters() {
-  const cats = [...new Set(DRUGS.map(d => d['大分類']).filter(Boolean))].sort();
-  const catSel = document.getElementById('catFilter');
-  cats.forEach(c => {
-    const o = document.createElement('option');
-    o.value = c; o.textContent = c;
-    catSel.appendChild(o);
-  });
+const GROUP_NAMES = {"01": "抗感染藥物", "02": "神經/精神科", "03": "麻醉藥物", "04": "止痛/抗炎", "05": "心血管", "06": "血液/造血", "07": "利尿劑", "08": "消化系統", "09": "呼吸系統", "10": "內分泌/代謝", "11": "抗組織胺/過敏", "12": "維他命", "13": "營養製劑", "14": "皮膚用藥", "15": "眼科用藥", "16": "解毒劑"};
+
+let selectedId = null;
+let currentGroup = '';
+let currentAlpha = '';
+
+function getGroup(d){
+  const m = d.cat.match(/^(\d+)\./);
+  return m ? m[1] : '';
 }
 
-function updateSubcats(cat) {
-  const sub = document.getElementById('subcatFilter');
-  sub.innerHTML = '<option value="">全部次分類</option>';
-  if (!cat) return;
-  const subs = [...new Set(DRUGS.filter(d => d['大分類'] === cat).map(d => d['小分類']).filter(Boolean))].sort();
-  subs.forEach(s => {
-    const o = document.createElement('option');
-    o.value = s; o.textContent = s;
-    sub.appendChild(o);
+function buildSidebar(){
+  const groupCount = {};
+  DRUGS.forEach(d => {
+    const g = getGroup(d);
+    if(g) groupCount[g] = (groupCount[g]||0)+1;
   });
+  document.getElementById('cnt-all').textContent = DRUGS.length;
+  const gl = document.getElementById('group-list');
+  gl.innerHTML = Object.keys(GROUP_NAMES).sort().map(g => `
+    <div class="sidebar-item" data-group="${g}" onclick="setGroup(this)">
+      ${g}. ${GROUP_NAMES[g] || ''} <span class="cnt">${groupCount[g]||0}</span>
+    </div>
+  `).join('');
 }
 
-document.getElementById('catFilter').addEventListener('change', function() {
-  updateSubcats(this.value);
-  applyFilters();
-});
-document.getElementById('subcatFilter').addEventListener('change', applyFilters);
-document.getElementById('formFilter').addEventListener('change', applyFilters);
+function buildAlphaBar(){
+  const filtered = getFiltered(false);
+  const alphas = [...new Set(filtered.map(d => d.idx1 ? d.idx1[0] : '').filter(Boolean))].sort();
+  const bar = document.getElementById('alpha-bar');
+  bar.innerHTML = ['全部',...alphas].map(a =>
+    `<button class="alpha-btn${currentAlpha===a||(!currentAlpha&&a==='全部')?' active':''}" onclick="setAlpha('${a}')">${a}</button>`
+  ).join('');
+}
 
-let debounceTimer;
-document.getElementById('searchInput').addEventListener('input', function() {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(applyFilters, 160);
-});
+function setGroup(el){
+  document.querySelectorAll('.sidebar-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  currentGroup = el.dataset.group;
+  currentAlpha = '';
+  document.getElementById('cat').value='';
+  render();
+}
 
-function applyFilters() {
-  const kw = document.getElementById('searchInput').value.trim().toLowerCase();
-  const cat = document.getElementById('catFilter').value;
-  const subcat = document.getElementById('subcatFilter').value;
-  const form = document.getElementById('formFilter').value;
+function setAlpha(a){
+  currentAlpha = a==='全部' ? '' : a;
+  render();
+}
 
-  filteredDrugs = DRUGS.filter(d => {
-    if (cat && d['大分類'] !== cat) return false;
-    if (subcat && d['小分類'] !== subcat) return false;
-    if (form && !d['劑量劑型'].includes(form)) return false;
-    if (kw) {
-      const haystack = [
-        d['藥品名稱'], d['原廠名'], d['學名名稱'],
-        d['適應症'], d['副作用'], d['藥理'],
-        d['注意事項'], d['用法用量'], d['備註欄']
-      ].join(' ').toLowerCase();
-      if (!haystack.includes(kw)) return false;
-    }
+function getFiltered(applyAlpha=true){
+  const kw = (document.getElementById('kw').value||'').toLowerCase();
+  const ind = (document.getElementById('ind').value||'').toLowerCase();
+  const cat = document.getElementById('cat').value;
+  return DRUGS.filter(d => {
+    if(currentGroup && getGroup(d)!==currentGroup) return false;
+    if(cat && d.cat!==cat) return false;
+    if(applyAlpha && currentAlpha && (d.idx1||'')[0]!==currentAlpha) return false;
+    if(kw && ![d.drug,d.name,d.generic,d.brand,d.cname,d.trade,d.indication].join(' ').toLowerCase().includes(kw)) return false;
+    if(ind && !(d.indication||'').toLowerCase().includes(ind)) return false;
     return true;
   });
-
-  updateResultBar(kw, cat, subcat, form);
-  render(filteredDrugs);
 }
 
-function updateResultBar(kw, cat, subcat, form) {
-  const bar = document.getElementById('resultBar');
-  const n = (kw || cat || subcat || form) ? filteredDrugs.length : DRUGS.length;
-  const total = DRUGS.length;
-  let html = `顯示 <strong>${n}</strong> / ${total} 筆`;
-  if (kw) html += ` &nbsp;·&nbsp; 關鍵字：<span style="color:var(--accent)">${escHtml(kw)}</span>`;
-  bar.innerHTML = html;
+function pregClass(p){
+  if(!p) return '';
+  if(p==='A'||p==='B') return 'preg-A';
+  if(p==='C') return 'preg-C';
+  return 'preg-D';
 }
 
-function clearFilters() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('catFilter').value = '';
-  document.getElementById('subcatFilter').innerHTML = '<option value="">全部次分類</option>';
-  document.getElementById('formFilter').value = '';
-  applyFilters();
-}
-
-// ── Render cards ──
-function render(list) {
-  const container = document.getElementById('cardContainer');
-  const empty = document.getElementById('emptyEl');
-  
-  if (list.length === 0) {
-    container.style.display = 'none';
-    empty.style.display = 'block';
+function render(){
+  buildAlphaBar();
+  const filtered = getFiltered(true);
+  document.getElementById('results-bar').textContent = `共 ${filtered.length} 筆藥品`;
+  const list = document.getElementById('drug-list');
+  if(!filtered.length){
+    list.innerHTML='<div class="empty">查無符合條件的藥品</div>';
     return;
   }
-  empty.style.display = 'none';
-  container.style.display = 'grid';
-  
-  const kw = document.getElementById('searchInput').value.trim().toLowerCase();
-  
-  container.innerHTML = list.map(d => buildCard(d, kw)).join('');
-  
-  // attach click handlers
-  container.querySelectorAll('.card').forEach(el => {
-    el.addEventListener('click', function(e) {
-      if (e.target.classList.contains('btn-close')) {
-        this.classList.remove('open');
-        openCardId = null;
-        return;
-      }
-      const id = +this.dataset.id;
-      if (openCardId === id) {
-        this.classList.remove('open');
-        openCardId = null;
-      } else {
-        document.querySelectorAll('.card.open').forEach(c => c.classList.remove('open'));
-        this.classList.add('open');
-        openCardId = id;
-        this.scrollIntoView({behavior:'smooth', block:'nearest'});
-      }
-    });
-  });
-}
-
-function buildCard(d, kw) {
-  const hl = s => kw ? escHtml(s).replace(new RegExp(escRe(kw), 'gi'), m => `<span class="highlight">${m}</span>`) : escHtml(s);
-  const pregText = d['孕婦分級'] ? d['孕婦分級'].substring(0, 30) : '';
-
-  return `<div class="card" data-id="${d.id}">
-  <div class="card-head">
-    <div>
-      <div class="card-name">${hl(d['藥品名稱'])}</div>
-      <div class="card-brand">${hl(d['原廠名'])} ${d['學名名稱'] && d['學名名稱']!==d['藥品名稱'] ? '· '+hl(d['學名名稱']) : ''}</div>
+  list.innerHTML = filtered.slice(0,200).map(d => `
+    <div class="drug-card${selectedId===d.id?' selected':''}" onclick="showDetail(${d.id})">
+      <div class="drug-id">${d.idx1||'?'}</div>
+      <div class="drug-body">
+        <div class="drug-top">
+          <span class="drug-name">${d.drug}</span>
+          <span class="drug-cname">${d.cname}</span>
+        </div>
+        <div class="tags">
+          ${d.cat ? `<span class="tag tag-cat">${d.cat}</span>` : ''}
+          ${d.preg ? `<span class="badge-preg ${pregClass(d.preg)}">孕${d.preg}</span>` : ''}
+          ${d.note ? '<span class="tag" style="background:#fff3cd;color:#856404">自費</span>' : ''}
+        </div>
+        <div class="indication-preview">${d.indication||'—'}</div>
+      </div>
     </div>
-    <div class="card-badge">
-      ${d['大分類'] ? `<span class="badge badge-cat">${escHtml(shortCat(d['大分類']))}</span>` : ''}
-      ${d['小分類'] ? `<span class="badge badge-sub">${escHtml(d['小分類'])}</span>` : ''}
-      ${pregText ? `<span class="badge badge-preg">孕 ${escHtml(pregText)}</span>` : ''}
+  `).join('');
+  if(filtered.length>200){
+    list.innerHTML += `<div class="empty" style="padding:1rem">顯示前 200 筆，請縮小搜尋條件查看更多</div>`;
+  }
+}
+
+function showDetail(id){
+  selectedId = id;
+  const d = DRUGS.find(x=>x.id===id);
+  if(!d) return;
+  document.getElementById('dp-title').textContent = d.drug;
+  document.getElementById('dp-sub').textContent = [d.generic, d.brand, d.cname].filter(Boolean).join(' ／ ');
+  const fields = [
+    ['適應症', d.indication, ''],
+    ['用法用量', d.dosage, ''],
+    ['藥理作用', [d.pharm,d.cat,d.cat2,d.cat3].filter(Boolean).join('；'), ''],
+    ['副作用', d.sideEffect, ''],
+    ['注意事項', d.caution, 'warn'],
+    ['外觀', d.appearance, ''],
+    ['商品名 / 原廠', [d.trade,d.brand].filter(Boolean).join(' / '), ''],
+    ['索引代碼', [d.idx1,d.idx2,d.idx3].filter(Boolean).join(' / '), ''],
+    ['備註', d.note, ''],
+  ].filter(f=>f[1]);
+  document.getElementById('dp-body').innerHTML = `
+    <div class="detail-tags">
+      ${d.cat?`<span class="tag tag-cat">${d.cat}</span>`:''}
+      ${d.preg?`<span class="badge-preg ${pregClass(d.preg)}">孕婦 ${d.preg} 級</span>`:''}
     </div>
-  </div>
-  <div class="card-preview">
-    ${d['劑量劑型'] ? `<div class="preview-item"><span class="preview-label">劑型</span> ${hl(d['劑量劑型'])}</div>` : ''}
-    ${d['適應症'] ? `<div class="preview-item"><span class="preview-label">適應症</span> ${hl(truncate(d['適應症'], 80))}</div>` : ''}
-  </div>
-  <div class="detail-panel">
-    <div class="detail-grid">
-      ${detailSection('原廠名', d['原廠名'], hl)}
-      ${detailSection('學名名稱', d['學名名稱'], hl)}
-      ${detailSection('劑量劑型', d['劑量劑型'], hl)}
-      ${pregText ? detailSection('孕婦分級', d['孕婦分級'], hl) : ''}
-    </div>
-    ${detailSection('藥理', d['藥理'], hl)}
-    ${detailSection('適應症', d['適應症'], hl)}
-    ${detailSection('用法用量', d['用法用量'], hl)}
-    ${detailSection('注意事項', d['注意事項'], hl)}
-    ${detailSection('副作用', d['副作用'], hl)}
-    ${d['備註欄'] ? detailSection('備註欄', d['備註欄'], hl) : ''}
-    <button class="btn-close">收起 ▲</button>
-  </div>
-</div>`;
+    ${fields.map(f=>`
+      <div class="field">
+        <div class="field-label">${f[0]}</div>
+        <div class="field-val${f[2]?' '+f[2]:''}">
+          ${f[1].replace(/\n/g,'<br>')}
+        </div>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+  render();
 }
 
-function detailSection(label, val, hl) {
-  if (!val) return '';
-  return `<div class="detail-section">
-    <div class="detail-label">${label}</div>
-    <div class="detail-val">${hl(val)}</div>
-  </div>`;
+function closeDetail(){
+  selectedId = null;
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  render();
 }
 
-function shortCat(s) {
-  // Abbreviate long category names for badge display
-  const map = {
-    '作用在中樞神經系統的藥物': '中樞神經',
-    '作用在心臟血管系統的藥物': '心臟血管',
-    '作用在肌肉骨骼系統的藥物': '肌肉骨骼',
-    '作用在呼吸道系統的藥物': '呼吸道',
-    '作用在胃腸道的藥物': '胃腸道',
-    '作用在泌尿系統的藥物': '泌尿系統',
-    '作用在內分泌腺的藥物': '內分泌',
-    '作用在血液系統的藥物': '血液系統',
-    '維他命與礦物質': '維他命',
-    '營養素、輸液和電解質': '輸液電解質',
-    '頭孢子菌類': '頭孢子菌',
-    '抗巴金森症的藥物': '抗巴金森',
-    '抗驚厥劑': '抗驚厥',
-    '抗濾過性病毒': '抗病毒',
-    '抗結核劑': '抗結核',
-    '腦代謝改善劑': '腦代謝',
-    '疥蟲藥和滅蝨藥': '疥蟲/蝨',
-  };
-  return map[s] || s;
-}
-
-function truncate(s, n) { return s && s.length > n ? s.substring(0,n)+'…' : (s||'') }
-function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') }
 </script>
 </body>
 </html>

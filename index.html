@@ -1,385 +1,494 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>本院用藥查詢系統</title>
+<title>院內用藥查詢</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:#f5f5f5;color:#1a1a1a;font-size:14px}
-header{background:#1a4f8a;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
-header h1{font-size:18px;font-weight:500}
-header span{font-size:12px;opacity:.75;margin-left:auto}
-.layout{display:flex;min-height:calc(100vh - 52px)}
-.sidebar{width:220px;background:#fff;border-right:1px solid #e0e0e0;flex-shrink:0;overflow-y:auto;padding:12px 0}
-.sidebar h3{font-size:11px;font-weight:600;color:#888;letter-spacing:.8px;text-transform:uppercase;padding:8px 16px 4px}
-.sidebar-item{display:flex;justify-content:space-between;align-items:center;padding:7px 16px;cursor:pointer;transition:background .12s;font-size:13px;color:#444;border-left:3px solid transparent}
-.sidebar-item:hover{background:#f0f4fa;color:#1a4f8a}
-.sidebar-item.active{background:#e8f0fb;color:#1a4f8a;border-left-color:#1a4f8a;font-weight:500}
-.sidebar-item .cnt{font-size:11px;color:#aaa;background:#f0f0f0;border-radius:10px;padding:1px 7px}
-.sidebar-item.active .cnt{background:#c8d9f5;color:#1a4f8a}
-.main{flex:1;display:flex;flex-direction:column;min-width:0}
-.toolbar{background:#fff;padding:12px 20px;border-bottom:1px solid #e0e0e0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.toolbar input,.toolbar select{height:36px;border:1px solid #d0d0d0;border-radius:6px;padding:0 12px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s}
-.toolbar input:focus,.toolbar select:focus{border-color:#1a4f8a;box-shadow:0 0 0 3px rgba(26,79,138,.1)}
-#kw{flex:1;min-width:160px}
-#ind{width:200px}
-#cat{width:220px}
-.badge-preg{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
-.preg-A,.preg-B{background:#d4edda;color:#155724}
-.preg-C{background:#fff3cd;color:#856404}
-.preg-D,.preg-X{background:#f8d7da;color:#721c24}
-
-.results-bar{padding:8px 20px;font-size:12px;color:#888;border-bottom:1px solid #eee;background:#fafafa}
-.drug-list{flex:1;overflow-y:auto;padding:12px 20px}
-.drug-card{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s;display:flex;gap:14px;align-items:flex-start}
-.drug-card:hover{border-color:#1a4f8a;box-shadow:0 2px 8px rgba(26,79,138,.1)}
-.drug-card.selected{border-color:#1a4f8a;border-width:2px;background:#fafcff}
-.drug-id{width:36px;height:36px;background:#e8f0fb;color:#1a4f8a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
-.drug-body{flex:1;min-width:0}
-.drug-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px}
-.drug-name{font-weight:600;font-size:14px;color:#1a1a1a}
-.drug-cname{font-size:13px;color:#444}
-.drug-generic{font-size:11px;color:#888}
-.tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
-.tag{font-size:11px;padding:2px 8px;border-radius:10px;background:#f0f0f0;color:#555}
-.tag-cat{background:#e8f0fb;color:#1a4f8a}
-.indication-preview{font-size:12px;color:#666;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.empty{padding:4rem;text-align:center;color:#aaa}
-.detail-panel{position:fixed;top:0;right:-520px;width:520px;height:100vh;background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,.12);overflow-y:auto;z-index:200;transition:right .25s ease;display:flex;flex-direction:column}
-.detail-panel.open{right:0}
-.detail-header{background:#1a4f8a;color:#fff;padding:16px 20px;position:sticky;top:0;z-index:10}
-.detail-title{font-size:16px;font-weight:600;margin-bottom:2px}
-.detail-sub{font-size:12px;opacity:.8}
-.detail-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:18px;line-height:28px;text-align:center}
-.detail-close:hover{background:rgba(255,255,255,.3)}
-.detail-body{padding:20px;flex:1}
-.detail-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.field{margin-bottom:16px;border-bottom:1px solid #f0f0f0;padding-bottom:14px}
-.field:last-child{border-bottom:none}
-.field-label{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.field-val{font-size:13px;color:#222;line-height:1.7}
-.field-val.warn{color:#cc6600}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:100;display:none}
-.overlay.show{display:block}
-.alpha-bar{display:flex;gap:4px;flex-wrap:wrap;padding:8px 16px}
-.alpha-btn{padding:4px 8px;font-size:12px;border:1px solid #e0e0e0;border-radius:4px;cursor:pointer;background:#fff;color:#444;transition:all .12s}
-.alpha-btn:hover{border-color:#1a4f8a;color:#1a4f8a}
-.alpha-btn.active{background:#1a4f8a;color:#fff;border-color:#1a4f8a}
-@media(max-width:700px){
-  .sidebar{display:none}
-  .detail-panel{width:100vw}
+:root{
+  --ink:#1c2a2e;
+  --paper:#f5f3ee;
+  --panel:#ffffff;
+  --line:#dcd7c9;
+  --teal:#0f5c5c;
+  --teal-dark:#0a3f3f;
+  --accent:#c0793f;
+  --muted:#6b7472;
+  --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --serif: 'Noto Serif TC', 'Songti TC', serif;
+  --sans: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+header{
+  background:var(--teal-dark);
+  color:#f5f3ee;
+  padding:28px 24px 22px;
+  border-bottom:4px solid var(--accent);
+}
+.header-inner{
+  max-width:1100px;
+  margin:0 auto;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.brand{
+  font-family:var(--serif);
+  font-size:26px;
+  letter-spacing:1px;
+  font-weight:700;
+}
+.brand small{
+  display:block;
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:3px;
+  color:#9fc7c0;
+  font-weight:400;
+  margin-top:4px;
+}
+.count-badge{
+  font-family:var(--mono);
+  font-size:12px;
+  color:#9fc7c0;
+  border:1px solid #2e6e6e;
+  padding:5px 10px;
+  border-radius:2px;
+}
+main{
+  max-width:1100px;
+  margin:0 auto;
+  padding:24px;
+}
+.search-bar{
+  display:flex;
+  gap:0;
+  background:var(--panel);
+  border:1.5px solid var(--ink);
+  box-shadow:4px 4px 0 var(--accent);
+  margin-bottom:18px;
+}
+.search-bar input{
+  flex:1;
+  border:none;
+  outline:none;
+  padding:16px 18px;
+  font-size:17px;
+  font-family:var(--sans);
+  background:transparent;
+  color:var(--ink);
+}
+.search-bar .icon{
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  color:var(--muted);
+  font-family:var(--mono);
+  font-size:13px;
+  border-right:1px solid var(--line);
+}
+.filters{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.filters button{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:0.5px;
+  padding:7px 13px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  color:var(--muted);
+  cursor:pointer;
+  border-radius:2px;
+  transition:all .15s;
+}
+.filters button:hover{ border-color:var(--teal); color:var(--teal);}
+.filters button.active{
+  background:var(--teal);
+  border-color:var(--teal);
+  color:#fff;
+}
+.meta-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-family:var(--mono);
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:10px;
+  padding:0 2px;
+}
+#sortSelect{
+  font-family:var(--mono);
+  font-size:12px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  padding:4px 6px;
+  color:var(--ink);
+}
+.results{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-left:4px solid var(--teal);
+  padding:16px 18px;
+  cursor:pointer;
+  transition:border-color .15s, transform .1s;
+}
+.card:hover{
+  border-left-color:var(--accent);
+}
+.card-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.card-name{
+  font-family:var(--serif);
+  font-size:18px;
+  font-weight:700;
+  color:var(--teal-dark);
+}
+.card-cn{
+  font-size:14px;
+  color:var(--ink);
+}
+.card-id{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.card-sub{
+  margin-top:6px;
+  font-size:13px;
+  color:var(--muted);
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.card-sub span b{ color:var(--ink); font-weight:600; }
+.tag{
+  display:inline-block;
+  font-family:var(--mono);
+  font-size:10px;
+  border:1px solid var(--line);
+  padding:1px 6px;
+  border-radius:2px;
+  color:var(--muted);
+}
+.empty{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--muted);
+  font-family:var(--mono);
+  font-size:13px;
+}
+/* modal */
+.overlay{
+  position:fixed; inset:0;
+  background:rgba(20,30,30,0.55);
+  display:none;
+  align-items:flex-start;
+  justify-content:center;
+  padding:40px 16px;
+  overflow-y:auto;
+  z-index:50;
+}
+.overlay.show{ display:flex; }
+.modal{
+  background:var(--panel);
+  max-width:700px;
+  width:100%;
+  border:1.5px solid var(--ink);
+  box-shadow:6px 6px 0 var(--accent);
+  margin-bottom:40px;
+}
+.modal-head{
+  background:var(--teal-dark);
+  color:#f5f3ee;
+  padding:18px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.modal-head h2{
+  margin:0;
+  font-family:var(--serif);
+  font-size:22px;
+}
+.modal-head .sub{
+  font-family:var(--mono);
+  font-size:12px;
+  color:#9fc7c0;
+  margin-top:4px;
+}
+.modal-close{
+  background:none;
+  border:1px solid #3a7373;
+  color:#f5f3ee;
+  width:30px; height:30px;
+  cursor:pointer;
+  font-size:16px;
+  line-height:1;
+  border-radius:2px;
+  flex-shrink:0;
+}
+.modal-body{ padding:22px 24px 28px; }
+.field{
+  margin-bottom:16px;
+}
+.field-label{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:1.5px;
+  color:var(--accent);
+  text-transform:uppercase;
+  margin-bottom:5px;
+  display:block;
+}
+.field-value{
+  font-size:14.5px;
+  line-height:1.7;
+  color:var(--ink);
+  white-space:pre-wrap;
+}
+.field-value.empty-val{ color:var(--muted); font-style:italic; }
+.field-row{
+  display:flex;
+  gap:24px;
+  flex-wrap:wrap;
+}
+.field-row .field{ flex:1; min-width:140px; }
+footer{
+  text-align:center;
+  padding:30px 20px 50px;
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--muted);
+}
+footer a{ color:var(--teal); }
+@media (max-width:600px){
+  .brand{font-size:21px;}
+  .search-bar input{padding:13px 14px; font-size:15px;}
 }
 </style>
 </head>
 <body>
-
 <header>
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-  <h1>本院用藥查詢系統</h1>
-  <span id="total-badge">載入中…</span>
+  <div class="header-inner">
+    <div class="brand">院內用藥查詢<small>PHARMACY FORMULARY LOOKUP</small></div>
+    <div class="count-badge" id="countBadge">載入中...</div>
+  </div>
 </header>
 
-<div class="layout">
-  <div class="sidebar" id="sidebar">
-    <h3>藥品分類</h3>
-    <div class="sidebar-item active" data-group="" onclick="setGroup(this)">
-      全部藥品 <span class="cnt" id="cnt-all">0</span>
-    </div>
-    <div id="group-list"></div>
+<main>
+  <div class="search-bar">
+    <div class="icon">SEARCH</div>
+    <input id="searchInput" type="text" placeholder="輸入藥品名 / 學名 / 商品名 / 中文名 / 適應症 / 索引碼..." autocomplete="off">
   </div>
 
-  <div class="main">
-    <div class="toolbar">
-      <input type="text" id="kw" placeholder="🔍 藥品名稱、學名、商品名、適應症…" oninput="render()">
-      <input type="text" id="ind" style="display:none" oninput="render()">
-      <select id="cat" onchange="render()">
-        <option value="">全部細項分類</option>
-        <option value="01.01青黴素類">01.01青黴素類</option>
-<option value="01.02頭孢子菌類">01.02頭孢子菌類</option>
-<option value="01.02頭孢子菌類(丙醯胺)">01.02頭孢子菌類(丙醯胺)</option>
-<option value="01.03四環素">01.03四環素</option>
-<option value="01.04巨環類">01.04巨環類</option>
-<option value="01.05胺基配糖體">01.05胺基配糖體</option>
-<option value="01.06多類">01.06多類</option>
-<option value="01.07恩菎類">01.07恩菎類</option>
-<option value="01.08磺胺藥">01.08磺胺藥</option>
-<option value="01.10其他類抗生素">01.10其他類抗生素</option>
-<option value="01.11抗結核劑">01.11抗結核劑</option>
-<option value="01.16抗滴蟲和抗念珠球菌">01.16抗滴蟲和抗念珠球菌</option>
-<option value="01.17疥蟲藥和滅蝨藥">01.17疥蟲藥和滅蝨藥</option>
-<option value="01.19抗濾過性病毒">01.19抗濾過性病毒</option>
-<option value="01.19抗濾過性病毒藥">01.19抗濾過性病毒藥</option>
-<option value="02.02安眠藥">02.02安眠藥</option>
-<option value="02.03抗精神病藥物">02.03抗精神病藥物</option>
-<option value="02.04抗焦慮的藥物">02.04抗焦慮的藥物</option>
-<option value="02.05抗憂鬱劑">02.05抗憂鬱劑</option>
-<option value="02.06抗驚厥劑">02.06抗驚厥劑</option>
-<option value="02.07抗巴金森症的藥物">02.07抗巴金森症的藥物</option>
-<option value="02.07抗帕金森症的藥物">02.07抗帕金森症的藥物</option>
-<option value="02.09失智症治療劑">02.09失智症治療劑</option>
-<option value="02.11腦代謝改善劑">02.11腦代謝改善劑</option>
-<option value="03.01全身麻醉劑">03.01全身麻醉劑</option>
-<option value="03.02局部麻醉劑">03.02局部麻醉劑</option>
-<option value="04.01麻醉性止痛劑">04.01麻醉性止痛劑</option>
-<option value="04.02非類固醇類抗發炎劑">04.02非類固醇類抗發炎劑</option>
-<option value="04.04膽鹼作用劑">04.04膽鹼作用劑</option>
-<option value="04.05骨骼肌鬆弛劑">04.05骨骼肌鬆弛劑</option>
-<option value="05.01強心劑">05.01強心劑</option>
-<option value="05.02抗心律不整藥物">05.02抗心律不整藥物</option>
-<option value="05.03抗高血壓的藥物">05.03抗高血壓的藥物</option>
-<option value="05.04抗狹心症藥物(冠狀血管擴張劑)">05.04抗狹心症藥物(冠狀血管擴張劑)</option>
-<option value="05.05降血脂藥物">05.05降血脂藥物</option>
-<option value="05.06低血壓和休克治療劑">05.06低血壓和休克治療劑</option>
-<option value="05.07末梢血管擴張劑">05.07末梢血管擴張劑</option>
-<option value="06.01抗貧血的藥物">06.01抗貧血的藥物</option>
-<option value="06.02抗凝血劑">06.02抗凝血劑</option>
-<option value="06.03抗血小板製劑和血栓">06.03抗血小板製劑和血栓</option>
-<option value="06.03抗血小板製劑和血栓溶解劑">06.03抗血小板製劑和血栓溶解劑</option>
-<option value="06.04止血劑">06.04止血劑</option>
-<option value="06.05代用血漿,造血細胞因子和血液透析">06.05代用血漿,造血細胞因子和血液透析</option>
-<option value="07.01利尿劑">07.01利尿劑</option>
-<option value="07.02泌尿系統疾病的治療劑">07.02泌尿系統疾病的治療劑</option>
-<option value="08.01制酸劑和抗發脹劑">08.01制酸劑和抗發脹劑</option>
-<option value="08.02消化性潰瘍癒合劑">08.02消化性潰瘍癒合劑</option>
-<option value="08.03解痙劑">08.03解痙劑</option>
-<option value="08.04消化劑和利膽劑">08.04消化劑和利膽劑</option>
-<option value="08.05緩瀉劑">08.05緩瀉劑</option>
-<option value="08.06抗腹瀉劑">08.06抗腹瀉劑</option>
-<option value="08.07催吐劑和鎮吐劑(動暈症治療劑)">08.07催吐劑和鎮吐劑(動暈症治療劑)</option>
-<option value="08.08肝病治療劑">08.08肝病治療劑</option>
-<option value="09.01鎮咳藥">09.01鎮咳藥</option>
-<option value="09.03痰液溶解劑">09.03痰液溶解劑</option>
-<option value="09.04支氣管擴張劑和抗氣喘藥物">09.04支氣管擴張劑和抗氣喘藥物</option>
-<option value="09.06耳鼻科用藥">09.06耳鼻科用藥</option>
-<option value="10.02甲狀腺激素和抗甲狀腺的藥物">10.02甲狀腺激素和抗甲狀腺的藥物</option>
-<option value="10.03骨質疏鬆治療劑">10.03骨質疏鬆治療劑</option>
-<option value="10.04抗糖尿病和昇血糖藥物">10.04抗糖尿病和昇血糖藥物</option>
-<option value="10.05腎上腺皮質類固醇">10.05腎上腺皮質類固醇</option>
-<option value="10.06雌激素和黃體激素">10.06雌激素和黃體激素</option>
-<option value="10.08雄激素和同化類固醇">10.08雄激素和同化類固醇</option>
-<option value="11.01抗組織胺">11.01抗組織胺</option>
-<option value="11.03疫苗">11.03疫苗</option>
-<option value="11.04類毒素">11.04類毒素</option>
-<option value="12.01水溶性維他命">12.01水溶性維他命</option>
-<option value="13.02非經腸營養素製劑">13.02非經腸營養素製劑</option>
-<option value="14.01皮膚用藥">14.01皮膚用藥</option>
-<option value="14.02痤瘡藥物">14.02痤瘡藥物</option>
-<option value="14.03痔瘡治療劑">14.03痔瘡治療劑</option>
-<option value="15.01眼科用藥">15.01眼科用藥</option>
-<option value="15.02青光眼治療劑">15.02青光眼治療劑</option>
-<option value="15.03其他眼科用藥">15.03其他眼科用藥</option>
-<option value="16.01解毒劑">16.01解毒劑</option>
-<option value="16.05其它">16.05其它</option>
+  <div class="filters" id="filterBar">
+    <button data-f="all" class="active">全部欄位</button>
+    <button data-f="藥品名稱">藥品名</button>
+    <button data-f="學名名稱">學名</button>
+    <button data-f="商品名">商品名</button>
+    <button data-f="藥品中文名">中文名</button>
+    <button data-f="適應症">適應症</button>
+    <button data-f="藥理作用">藥理分類</button>
+  </div>
+
+  <div class="meta-row">
+    <span id="resultCount">—</span>
+    <span>
+      排序
+      <select id="sortSelect">
+        <option value="default">預設</option>
+        <option value="name">藥品名 A–Z</option>
+        <option value="cn">中文名</option>
       </select>
-    </div>
-    <div class="alpha-bar" id="alpha-bar"></div>
-    <div class="results-bar" id="results-bar">載入中…</div>
-    <div class="drug-list" id="drug-list"></div>
+    </span>
   </div>
-</div>
 
-<div class="overlay" id="overlay" onclick="closeDetail()"></div>
-<div class="detail-panel" id="detail-panel">
-  <div class="detail-header">
-    <div class="detail-title" id="dp-title"></div>
-    <div class="detail-sub" id="dp-sub"></div>
-    <button class="detail-close" onclick="closeDetail()">×</button>
-  </div>
-  <div class="detail-body" id="dp-body"></div>
-</div>
+  <div class="results" id="results"></div>
+</main>
 
-<footer style="text-align:center;padding:24px 16px 16px;border-top:1px solid #eee;background:#fafafa;margin-top:auto">
-  <a href="admin.html" style="font-size:11px;color:#bbb;text-decoration:none" onmouseover="this.style.color='#999'" onmouseout="this.style.color='#bbb'">後台管理</a>
+<footer>
+  資料來源：院內藥品手冊 · 僅供院內同仁查詢參考，實際用藥請以醫囑及最新仿單為準 ·
+  <a href="admin.html">後台管理</a>
 </footer>
 
-<script>
-let DRUGS = [];
-
-const FIELD_MAP = {
-  "識別碼": "id", "藥品": "drug", "藥品名稱": "name", "學名名稱": "generic",
-  "原廠名": "brand", "藥品中文名": "cname", "商品名": "trade",
-  "索引1": "idx1", "索引2": "idx2", "索引3": "idx3", "藥理": "pharm",
-  "用法用量": "dosage", "適應症": "indication", "孕婦分級": "preg",
-  "外觀": "appearance", "藥理作用": "cat", "副作用": "sideEffect",
-  "注意事項": "caution", "備註欄": "note"
-};
-
-function mapDrug(raw){
-  const d = {};
-  for(const key in raw){
-    const mapped = FIELD_MAP[key] || key;
-    d[mapped] = raw[key];
-  }
-  return d;
-}
-
-function startApp(){
-  buildSidebar();
-  render();
-  document.getElementById('total-badge').textContent = `共 ${DRUGS.length} 筆藥品`;
-}
-
-fetch('drugs.json')
-  .then(r => {
-    if(!r.ok) throw new Error('無法讀取 drugs.json (HTTP ' + r.status + ')');
-    return r.json();
-  })
-  .then(data => {
-    DRUGS = data.map(mapDrug);
-    startApp();
-  })
-  .catch(err => {
-    document.getElementById('total-badge').textContent = '載入失敗';
-    document.getElementById('drug-list').innerHTML =
-      `<div class="empty">藥品資料載入失敗：${err.message}<br>請確認 drugs.json 與 index.html 放在同一個資料夾，並透過網頁伺服器（例如 GitHub Pages）開啟。<br>若是在本機直接用瀏覽器開啟檔案，請改用 index_standalone.html。</div>`;
-  });
-
-const GROUP_NAMES = {"01": "抗感染藥物", "02": "神經/精神科", "03": "麻醉藥物", "04": "止痛/抗炎", "05": "心血管", "06": "血液/造血", "07": "利尿劑", "08": "消化系統", "09": "呼吸系統", "10": "內分泌/代謝", "11": "抗組織胺/過敏", "12": "維他命", "13": "營養製劑", "14": "皮膚用藥", "15": "眼科用藥", "16": "解毒劑"};
-
-let selectedId = null;
-let currentGroup = '';
-let currentAlpha = '';
-
-function getGroup(d){
-  if(!d.cat) return '';
-  const m = d.cat.match(/^(\d+)\./);
-  return m ? m[1] : '';
-}
-
-function buildSidebar(){
-  const groupCount = {};
-  DRUGS.forEach(d => {
-    const g = getGroup(d);
-    if(g) groupCount[g] = (groupCount[g]||0)+1;
-  });
-  document.getElementById('cnt-all').textContent = DRUGS.length;
-  const gl = document.getElementById('group-list');
-  gl.innerHTML = Object.keys(GROUP_NAMES).sort().map(g => `
-    <div class="sidebar-item" data-group="${g}" onclick="setGroup(this)">
-      ${g}. ${GROUP_NAMES[g] || ''} <span class="cnt">${groupCount[g]||0}</span>
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="modalName"></h2>
+        <div class="sub" id="modalSub"></div>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
     </div>
-  `).join('');
-}
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
 
-function buildAlphaBar(){
-  const filtered = getFiltered(false);
-  const alphas = [...new Set(filtered.map(d => d.idx1 ? d.idx1[0] : '').filter(Boolean))].sort();
-  const bar = document.getElementById('alpha-bar');
-  bar.innerHTML = ['全部',...alphas].map(a =>
-    `<button class="alpha-btn${currentAlpha===a||(!currentAlpha&&a==='全部')?' active':''}" onclick="setAlpha('${a}')">${a}</button>`
-  ).join('');
-}
+<script>
+let DATA = [];
+let activeFilter = 'all';
 
-function setGroup(el){
-  document.querySelectorAll('.sidebar-item').forEach(e=>e.classList.remove('active'));
-  el.classList.add('active');
-  currentGroup = el.dataset.group;
-  currentAlpha = '';
-  document.getElementById('cat').value='';
-  render();
-}
+const LABELS = {
+  '識別碼':'識別碼','藥品名稱':'藥品名稱','學名名稱':'學名','原廠名':'原廠名',
+  '藥品中文名':'中文名','商品名':'商品名','索引1':'索引1','索引2':'索引2','索引3':'索引3',
+  '藥理':'藥理','用法用量':'用法用量','注意事項':'注意事項','適應症':'適應症',
+  '副作用':'副作用','孕婦分級':'孕婦用藥分級','外觀':'外觀','備註欄':'備註','藥理作用':'藥理分類'
+};
+const ALL_FIELDS = ['藥品名稱','學名名稱','原廠名','藥品中文名','商品名','索引1','索引2','索引3','適應症'];
 
-function setAlpha(a){
-  currentAlpha = a==='全部' ? '' : a;
-  render();
-}
-
-function getFiltered(applyAlpha=true){
-  const kw = (document.getElementById('kw').value||'').toLowerCase();
-  const ind = (document.getElementById('ind').value||'').toLowerCase();
-  const cat = document.getElementById('cat').value;
-  return DRUGS.filter(d => {
-    if(currentGroup && getGroup(d)!==currentGroup) return false;
-    if(cat && d.cat!==cat) return false;
-    if(applyAlpha && currentAlpha && (d.idx1||'')[0]!==currentAlpha) return false;
-    if(kw && ![d.drug,d.name,d.generic,d.brand,d.cname,d.trade,d.indication].join(' ').toLowerCase().includes(kw)) return false;
-    if(ind && !(d.indication||'').toLowerCase().includes(ind)) return false;
-    return true;
-  });
-}
-
-function pregClass(p){
-  if(!p) return '';
-  if(p==='A'||p==='B') return 'preg-A';
-  if(p==='C') return 'preg-C';
-  return 'preg-D';
-}
-
-function render(){
-  buildAlphaBar();
-  const filtered = getFiltered(true);
-  document.getElementById('results-bar').textContent = `共 ${filtered.length} 筆藥品`;
-  const list = document.getElementById('drug-list');
-  if(!filtered.length){
-    list.innerHTML='<div class="empty">查無符合條件的藥品</div>';
+async function loadData(){
+  try{
+    const res = await fetch('drugs.json', {cache:'no-store'});
+    DATA = await res.json();
+  }catch(e){
+    document.getElementById('results').innerHTML = '<div class="empty">資料載入失敗，請確認 drugs.json 是否存在於同目錄。</div>';
     return;
   }
-  list.innerHTML = filtered.slice(0,200).map(d => `
-    <div class="drug-card${selectedId===d.id?' selected':''}" onclick="showDetail(${d.id})">
-      <div class="drug-id">${d.idx1||'?'}</div>
-      <div class="drug-body">
-        <div class="drug-top">
-          <span class="drug-name">${d.drug}</span>
-          <span class="drug-cname">${d.cname}</span>
-        </div>
-        <div class="tags">
-          ${d.cat ? `<span class="tag tag-cat">${d.cat}</span>` : ''}
-          ${d.preg ? `<span class="badge-preg ${pregClass(d.preg)}">孕${d.preg}</span>` : ''}
-          ${d.note ? '<span class="tag" style="background:#fff3cd;color:#856404">自費</span>' : ''}
-        </div>
-        <div class="indication-preview">${d.indication||'—'}</div>
-      </div>
-    </div>
-  `).join('');
-  if(filtered.length>200){
-    list.innerHTML += `<div class="empty" style="padding:1rem">顯示前 200 筆，請縮小搜尋條件查看更多</div>`;
+  document.getElementById('countBadge').textContent = `共 ${DATA.length} 筆藥品資料`;
+  render('');
+}
+
+function highlight(text, q){
+  if(!q) return escapeHtml(text);
+  const esc = escapeHtml(text);
+  const idx = esc.toLowerCase().indexOf(q.toLowerCase());
+  if(idx === -1) return esc;
+  return esc.slice(0,idx) + '<mark style="background:#f0d9a8;color:inherit;padding:0 1px;">' + esc.slice(idx, idx+q.length) + '</mark>' + esc.slice(idx+q.length);
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function matches(item, q){
+  if(!q) return true;
+  const ql = q.toLowerCase();
+  const fields = activeFilter === 'all' ? ALL_FIELDS : [activeFilter];
+  return fields.some(f => (item[f]||'').toLowerCase().includes(ql));
+}
+
+function render(q){
+  q = q.trim();
+  let list = DATA.filter(d => matches(d, q));
+
+  const sortMode = document.getElementById('sortSelect').value;
+  if(sortMode === 'name'){
+    list = [...list].sort((a,b)=> (a['藥品名稱']||'').localeCompare(b['藥品名稱']||''));
+  } else if(sortMode === 'cn'){
+    list = [...list].sort((a,b)=> (a['藥品中文名']||'').localeCompare(b['藥品中文名']||'', 'zh-Hant'));
   }
-}
 
-function showDetail(id){
-  selectedId = id;
-  const d = DRUGS.find(x=>x.id===id);
-  if(!d) return;
-  document.getElementById('dp-title').textContent = d.drug;
-  document.getElementById('dp-sub').textContent = [d.generic, d.brand, d.cname].filter(Boolean).join(' ／ ');
-  const fields = [
-    ['適應症', d.indication, ''],
-    ['用法用量', d.dosage, ''],
-    ['藥理作用', [d.pharm,d.cat,d.cat2,d.cat3].filter(Boolean).join('；'), ''],
-    ['副作用', d.sideEffect, ''],
-    ['注意事項', d.caution, 'warn'],
-    ['外觀', d.appearance, ''],
-    ['商品名 / 原廠', [d.trade,d.brand].filter(Boolean).join(' / '), ''],
-    ['索引代碼', [d.idx1,d.idx2,d.idx3].filter(Boolean).join(' / '), ''],
-    ['備註', d.note, ''],
-  ].filter(f=>f[1]);
-  document.getElementById('dp-body').innerHTML = `
-    <div class="detail-tags">
-      ${d.cat?`<span class="tag tag-cat">${d.cat}</span>`:''}
-      ${d.preg?`<span class="badge-preg ${pregClass(d.preg)}">孕婦 ${d.preg} 級</span>`:''}
-    </div>
-    ${fields.map(f=>`
-      <div class="field">
-        <div class="field-label">${f[0]}</div>
-        <div class="field-val${f[2]?' '+f[2]:''}">
-          ${f[1].replace(/\n/g,'<br>')}
-        </div>
+  document.getElementById('resultCount').textContent = q ? `符合 ${list.length} 筆` : `顯示全部 ${list.length} 筆`;
+
+  const container = document.getElementById('results');
+  if(list.length === 0){
+    container.innerHTML = '<div class="empty">查無符合的藥品，請嘗試其他關鍵字</div>';
+    return;
+  }
+
+  const MAX_RENDER = 200;
+  const shown = list.slice(0, MAX_RENDER);
+
+  container.innerHTML = shown.map(d => `
+    <div class="card" data-id="${d['識別碼']}">
+      <div class="card-top">
+        <div class="card-name">${highlight(d['藥品名稱']||d['藥品']||'', q)}</div>
+        <div class="card-id">#${d['識別碼']}</div>
       </div>
-    `).join('')}
-  `;
-  document.getElementById('detail-panel').classList.add('open');
+      <div class="card-cn">${highlight(d['藥品中文名']||'', q)}</div>
+      <div class="card-sub">
+        ${d['學名名稱'] ? `<span><b>學名</b> ${highlight(d['學名名稱'], q)}</span>` : ''}
+        ${d['商品名'] ? `<span><b>商品名</b> ${highlight(d['商品名'], q)}</span>` : ''}
+        ${d['適應症'] ? `<span><b>適應症</b> ${highlight(d['適應症'], q)}</span>` : ''}
+        ${d['孕婦分級'] ? `<span class="tag">孕婦分級 ${d['孕婦分級']}</span>` : ''}
+      </div>
+    </div>
+  `).join('') + (list.length > MAX_RENDER ? `<div class="empty">僅顯示前 ${MAX_RENDER} 筆，請輸入更精確的關鍵字縮小範圍</div>` : '');
+
+  container.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-id');
+      const item = DATA.find(d => String(d['識別碼']) === id);
+      if(item) openModal(item);
+    });
+  });
+}
+
+function openModal(item){
+  document.getElementById('modalName').textContent = item['藥品名稱'] || item['藥品'] || '';
+  document.getElementById('modalSub').textContent = [item['藥品中文名'], item['學名名稱'], item['商品名']].filter(Boolean).join(' · ');
+
+  const order = ['適應症','用法用量','藥理','注意事項','副作用','藥理作用','孕婦分級','外觀','備註欄','學名名稱','原廠名','商品名','索引1','索引2','索引3'];
+  let html = '';
+  // primary highlighted fields
+  ['適應症','用法用量','藥理','注意事項','副作用'].forEach(f => {
+    const v = item[f];
+    html += `<div class="field"><span class="field-label">${LABELS[f]}</span><div class="field-value ${v?'':'empty-val'}">${escapeHtml(v) || '（無資料）'}</div></div>`;
+  });
+  html += `<div class="field-row">
+    <div class="field"><span class="field-label">藥理分類</span><div class="field-value ${item['藥理作用']?'':'empty-val'}">${escapeHtml(item['藥理作用'])||'—'}</div></div>
+    <div class="field"><span class="field-label">孕婦用藥分級</span><div class="field-value ${item['孕婦分級']?'':'empty-val'}">${escapeHtml(item['孕婦分級'])||'—'}</div></div>
+    <div class="field"><span class="field-label">外觀</span><div class="field-value ${item['外觀']?'':'empty-val'}">${escapeHtml(item['外觀'])||'—'}</div></div>
+  </div>`;
+  if(item['備註欄']){
+    html += `<div class="field"><span class="field-label">備註</span><div class="field-value">${escapeHtml(item['備註欄'])}</div></div>`;
+  }
+  html += `<div class="field-row">
+    <div class="field"><span class="field-label">索引</span><div class="field-value">${[item['索引1'],item['索引2'],item['索引3']].filter(Boolean).join(' / ') || '—'}</div></div>
+    <div class="field"><span class="field-label">原廠名</span><div class="field-value">${escapeHtml(item['原廠名'])||'—'}</div></div>
+  </div>`;
+
+  document.getElementById('modalBody').innerHTML = html;
   document.getElementById('overlay').classList.add('show');
-  render();
 }
 
-function closeDetail(){
-  selectedId = null;
-  document.getElementById('detail-panel').classList.remove('open');
+document.getElementById('modalClose').addEventListener('click', ()=>{
   document.getElementById('overlay').classList.remove('show');
-  render();
-}
+});
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'overlay') document.getElementById('overlay').classList.remove('show');
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape') document.getElementById('overlay').classList.remove('show');
+});
 
+document.getElementById('searchInput').addEventListener('input', (e)=> render(e.target.value));
+document.getElementById('sortSelect').addEventListener('change', ()=> render(document.getElementById('searchInput').value));
+
+document.getElementById('filterBar').addEventListener('click', (e)=>{
+  if(e.target.tagName !== 'BUTTON') return;
+  document.querySelectorAll('#filterBar button').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  activeFilter = e.target.getAttribute('data-f');
+  render(document.getElementById('searchInput').value);
+});
+
+loadData();
 </script>
 </body>
 </html>

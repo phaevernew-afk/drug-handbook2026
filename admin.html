@@ -1,213 +1,301 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用藥管理後台</title>
-    <!-- 引入 Tailwind CSS 樣式庫 -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- 引入關鍵套件：SheetJS 讓網頁能直接讀取 Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用藥資料庫 · 後台管理</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --ink:#1c2a2e; --paper:#f5f3ee; --panel:#ffffff; --line:#dcd7c9;
+  --teal:#0f5c5c; --teal-dark:#0a3f3f; --accent:#c0793f; --muted:#6b7472;
+  --danger:#a5402c;
+  --mono:'IBM Plex Mono','Courier New',monospace;
+  --serif:'Noto Serif TC','Songti TC',serif;
+  --sans:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);}
+header{background:var(--teal-dark);color:#f5f3ee;padding:24px;border-bottom:4px solid var(--accent);}
+.header-inner{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;}
+.brand{font-family:var(--serif);font-size:24px;font-weight:700;}
+.brand small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:3px;color:#9fc7c0;font-weight:400;margin-top:4px;}
+a.back{color:#9fc7c0;font-family:var(--mono);font-size:12px;text-decoration:none;}
+a.back:hover{text-decoration:underline;}
+main{max-width:1200px;margin:0 auto;padding:24px;}
+
+.panel{background:var(--panel);border:1px solid var(--line);margin-bottom:20px;}
+.panel-head{
+  padding:12px 18px;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:12px;letter-spacing:1.5px;color:var(--accent);
+  text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;
+}
+.panel-body{padding:18px;}
+
+.step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
+.step-num{
+  font-family:var(--mono);font-size:11px;background:var(--teal);color:#fff;
+  width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;
+}
+.step-text{font-size:14px;line-height:1.6;color:var(--ink);}
+.step-text b{color:var(--teal-dark);}
+
+.btn{
+  font-family:var(--mono);font-size:12.5px;letter-spacing:0.5px;
+  padding:9px 16px;border:1px solid var(--ink);background:var(--panel);color:var(--ink);
+  cursor:pointer;border-radius:2px;transition:all .15s;
+}
+.btn:hover{background:var(--ink);color:var(--paper);}
+.btn-primary{background:var(--teal);border-color:var(--teal);color:#fff;}
+.btn-primary:hover{background:var(--teal-dark);border-color:var(--teal-dark);}
+.btn-danger{border-color:var(--danger);color:var(--danger);}
+.btn-danger:hover{background:var(--danger);color:#fff;}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn[disabled]{opacity:0.4;cursor:not-allowed;}
+.btn[disabled]:hover{background:var(--panel);color:var(--ink);}
+
+input[type=file]{font-family:var(--sans);font-size:13px;}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.toolbar input[type=text]{
+  flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);
+  font-family:var(--sans);font-size:14px;outline:none;
+}
+.toolbar input[type=text]:focus{border-color:var(--teal);}
+
+.status-line{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:10px;}
+.status-line.ok{color:var(--teal);}
+.status-line.err{color:var(--danger);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{
+  text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:0.5px;
+  color:var(--muted);text-transform:uppercase;border-bottom:2px solid var(--ink);
+  padding:8px 8px;position:sticky;top:0;background:var(--panel);
+}
+tbody td{border-bottom:1px solid var(--line);padding:6px 8px;vertical-align:top;}
+tbody tr:hover{background:#faf8f3;}
+td[contenteditable]{outline:none;min-width:60px;}
+td[contenteditable]:focus{background:#fdf4e3;}
+.col-id{font-family:var(--mono);color:var(--muted);width:50px;}
+.col-actions{width:50px;text-align:center;}
+.table-wrap{max-height:520px;overflow:auto;border:1px solid var(--line);}
+.del-btn{cursor:pointer;color:var(--danger);font-family:var(--mono);font-size:14px;border:none;background:none;}
+.del-btn:hover{text-decoration:underline;}
+
+.field-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;}
+.field-grid label{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:3px;}
+.field-grid input,.field-grid textarea{
+  width:100%;border:1px solid var(--line);padding:7px 8px;font-family:var(--sans);font-size:13px;outline:none;
+}
+.field-grid textarea{grid-column:span 3;min-height:50px;resize:vertical;}
+.field-grid input:focus,.field-grid textarea:focus{border-color:var(--teal);}
+
+.note{font-size:12.5px;color:var(--muted);line-height:1.7;}
+.kbd{font-family:var(--mono);background:#efece2;padding:1px 5px;border-radius:2px;font-size:11px;}
+footer{text-align:center;padding:30px 20px 50px;font-family:var(--mono);font-size:11px;color:var(--muted);}
+</style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 pb-12">
+<body>
+<header>
+  <div class="header-inner">
+    <div class="brand">用藥資料庫 · 後台管理<small>ADMIN PANEL</small></div>
+    <a class="back" href="index.html">← 返回查詢頁</a>
+  </div>
+</header>
 
-    <!-- 頂部導覽列 -->
-    <header class="bg-slate-800 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-wide flex items-center gap-2">
-                📝 用藥管理後台
-            </h1>
-            <a href="index.html" class="text-sm bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-medium transition">
-                ← 回查詢介面
-            </a>
-        </div>
-    </header>
+<main>
 
-    <!-- 後台功能操作區 -->
-    <main class="max-w-7xl mx-auto px-4 mt-6">
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-wrap">
-                
-                <!-- 搜尋與檔案匯入區 -->
-                <div class="flex items-center gap-3 flex-wrap">
-                    <input type="text" id="admin-search" placeholder="搜尋藥品..." 
-                           class="border border-slate-300 rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-slate-500">
-                    
-                    <!-- 隱藏的實際 File Input，改用按鈕觸發 -->
-                    <input type="file" id="excel-file-input" accept=".xls,.xlsx" class="hidden">
-                    <button onclick="document.getElementById('excel-file-input').click()" 
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
-                        📊 匯入 Excel 檔案
-                    </button>
+  <div class="panel">
+    <div class="panel-head">使用說明</div>
+    <div class="panel-body">
+      <div class="step"><div class="step-num">1</div><div class="step-text">點「載入目前資料」讀取網站現有的 <span class="kbd">drugs.json</span>，或直接上傳 Excel（<span class="kbd">.xls / .xlsx</span>）建立新資料表。</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">在下方表格中<b>直接點選儲存格編輯</b>、新增列、或刪除列來修改 / 新增藥品。</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">完成後按「下載 drugs.json」，將下載的檔案覆蓋網站 GitHub repo 中的 <span class="kbd">drugs.json</span> 並上傳（commit）即可更新查詢頁。</div></div>
+    </div>
+  </div>
 
-                    <button id="import-json-btn" class="border border-slate-300 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition">
-                        ⬆️ 匯入 JSON
-                    </button>
-                </div>
+  <div class="panel">
+    <div class="panel-head">資料來源</div>
+    <div class="panel-body">
+      <div class="toolbar">
+        <button class="btn btn-primary" id="loadCurrentBtn">載入目前 drugs.json</button>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">或上傳 Excel 檔（.xls / .xlsx）：</span>
+        <input type="file" id="excelInput" accept=".xls,.xlsx">
+      </div>
+      <div class="status-line" id="loadStatus">尚未載入資料</div>
+      <div class="note">
+        上傳 Excel 時，系統會自動依欄位標題比對（識別碼、藥品名稱、學名名稱、原廠名、藥品中文名、商品名、索引1～3、藥理、用法用量、注意事項、適應症、副作用、孕婦分級、外觀、備註欄、藥理作用），找不到對應欄位者留空。若 Excel 標題與既有欄位不同，匯入後仍可在表格中手動調整。
+      </div>
+    </div>
+  </div>
 
-                <!-- 匯出與狀態區 -->
-                <div class="flex items-center gap-3">
-                    <span class="text-sm font-medium text-slate-500" id="admin-count">共 0 筆</span>
-                    <button id="export-json-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
-                        📥 匯出 JSON
-                    </button>
-                </div>
+  <div class="panel" id="editorPanel" style="display:none;">
+    <div class="panel-head">
+      編輯藥品資料
+      <span id="rowCount" style="color:var(--muted);"></span>
+    </div>
+    <div class="panel-body">
+      <div class="toolbar">
+        <input type="text" id="filterInput" placeholder="搜尋表格內容以篩選顯示...">
+        <button class="btn" id="addRowBtn">＋ 新增藥品</button>
+        <button class="btn btn-primary" id="downloadBtn">⬇ 下載 drugs.json</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr id="theadRow"></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-            </div>
+</main>
 
-            <!-- 提示警告 -->
-            <div class="mt-4 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm flex flex-col md:flex-row justify-between gap-2">
-                <span>⚠️ <strong>後台資料與查詢頁面獨立：</strong>此後台目前直接在瀏覽器記憶體中處理。請點擊「匯入 Excel」讀取最新檔案，確認表格正確後，點擊「匯出 JSON」並覆蓋到 GitHub 專案中即可更新。</span>
-            </div>
-        </div>
+<footer>本頁面為純前端工具，所有編輯僅存在於瀏覽器中；下載後請務必上傳覆蓋 drugs.json 才會生效。</footer>
 
-        <!-- 藥品表格顯示區 -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 text-sm font-semibold">
-                            <th class="p-4 w-16">ID</th>
-                            <th class="p-4">藥品名稱</th>
-                            <th class="p-4">中文名</th>
-                            <th class="p-4">學名</th>
-                            <th class="p-4">分類 (藥理作用)</th>
-                            <th class="p-4">適應症</th>
-                            <th class="p-4 w-20 text-center">孕婦</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-table-body" class="divide-y divide-slate-100 text-sm">
-                        <tr>
-                            <td colspan="7" class="text-center py-12 text-slate-400">目前暫無資料，請點擊上方按鈕匯入 Excel 或 JSON 檔案。</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
+<script>
+const FIELDS = ['識別碼','藥品名稱','學名名稱','原廠名','藥品中文名','商品名','索引1','索引2','索引3','藥理','用法用量','注意事項','適應症','副作用','孕婦分級','外觀','備註欄','藥理作用'];
+const SHORT_COLS = ['識別碼','藥品名稱','學名名稱','藥品中文名','商品名','適應症','孕婦分級']; // shown directly in table; rest editable via row expand not needed, show all but narrower
 
-    <script>
-        let currentDrugsData = [];
+let rows = [];
 
-        // 監聽 Excel 檔案上傳
-        document.getElementById('excel-file-input').addEventListener('change', handleExcelUpload);
-        
-        // 監聽 匯出 JSON 按鈕
-        document.getElementById('export-json-btn').addEventListener('click', exportJsonFile);
+function setStatus(msg, cls){
+  const el = document.getElementById('loadStatus');
+  el.textContent = msg;
+  el.className = 'status-line' + (cls ? ' '+cls : '');
+}
 
-        // 監聽 匯入 JSON 按鈕 (保留原功能)
-        document.getElementById('import-json-btn').addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = event => {
-                    try {
-                        currentDrugsData = JSON.parse(event.target.result);
-                        renderAdminTable(currentDrugsData);
-                    } catch(err) { alert('JSON 格式解析錯誤！'); }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
+async function loadCurrent(){
+  setStatus('載入中...');
+  try{
+    const res = await fetch('drugs.json', {cache:'no-store'});
+    if(!res.ok) throw new Error('找不到 drugs.json');
+    const data = await res.json();
+    rows = data.map(normalizeRow);
+    setStatus(`已載入目前 drugs.json，共 ${rows.length} 筆`, 'ok');
+    renderTable();
+  }catch(e){
+    setStatus('載入失敗：' + e.message + '（可改用上傳 Excel 建立新資料）', 'err');
+  }
+}
+
+function normalizeRow(r){
+  const out = {};
+  FIELDS.forEach(f => out[f] = (r[f] !== undefined && r[f] !== null) ? String(r[f]) : '');
+  return out;
+}
+
+document.getElementById('loadCurrentBtn').addEventListener('click', loadCurrent);
+
+document.getElementById('excelInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  setStatus('讀取 Excel 中...');
+  const reader = new FileReader();
+  reader.onload = (evt)=>{
+    try{
+      const wb = XLSX.read(evt.target.result, {type:'array'});
+      const sheetName = wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(sheet, {defval:''});
+      rows = json.map(r => {
+        const out = {};
+        FIELDS.forEach(f => {
+          out[f] = r[f] !== undefined ? String(r[f]) : '';
         });
+        return out;
+      });
+      // assign id if missing
+      rows.forEach((r,i)=>{ if(!r['識別碼']) r['識別碼'] = String(i+1); });
+      setStatus(`已從 Excel「${sheetName}」匯入 ${rows.length} 筆資料`, 'ok');
+      renderTable();
+    }catch(err){
+      setStatus('Excel 讀取失敗：' + err.message, 'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
 
-        // 監聽即時關鍵字搜尋
-        document.getElementById('admin-search').addEventListener('input', (e) => {
-            const kw = e.target.value.toLowerCase().trim();
-            if(!kw) {
-                renderAdminTable(currentDrugsData);
-                return;
-            }
-            const filtered = currentDrugsData.filter(d => {
-                return [d['藥品名稱'], d['藥品中文名'], d['學名名稱'], d['藥理作用'], d['適應症']]
-                       .some(f => (f || '').toString().toLowerCase().includes(kw));
-            });
-            renderAdminTable(filtered, false); // 不更新總筆數計數，只做畫面篩選
-        });
+function renderTable(){
+  document.getElementById('editorPanel').style.display = 'block';
+  document.getElementById('rowCount').textContent = `(${rows.length} 筆)`;
 
-        // 處理 Excel 檔案讀取
-        function handleExcelUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+  const thead = document.getElementById('theadRow');
+  thead.innerHTML = '<th class="col-id">識別碼</th>' +
+    FIELDS.slice(1).map(f => `<th>${f}</th>`).join('') +
+    '<th class="col-actions">操作</th>';
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                
-                // 優先尋找名稱叫作「藥品」的工作表，找不到就抓第一張
-                const sheetName = workbook.SheetNames.includes('藥品') ? '藥品' : workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                
-                // 將 Excel 轉換成 JSON 陣列物件
-                const rawJson = XLSX.utils.sheet_to_json(worksheet);
-                
-                if (rawJson.length === 0) {
-                    alert('Excel 內沒有發現任何資料！');
-                    return;
-                }
+  buildBody(rows);
+}
 
-                currentDrugsData = rawJson;
-                renderAdminTable(currentDrugsData);
-                alert(`成功讀取 Excel！共匯入 ${currentDrugsData.length} 筆藥品資料。`);
-            };
-            reader.readAsArrayBuffer(file);
-            // 清空 input 讓同一個檔案可以重複上傳觸發
-            e.target.value = '';
-        }
+function buildBody(list){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = list.map((r, idx) => {
+    const realIdx = rows.indexOf(r);
+    return `<tr data-idx="${realIdx}">
+      <td class="col-id" contenteditable="true" data-field="識別碼">${escapeHtml(r['識別碼'])}</td>
+      ${FIELDS.slice(1).map(f => `<td contenteditable="true" data-field="${escapeAttr(f)}">${escapeHtml(r[f])}</td>`).join('')}
+      <td class="col-actions"><button class="del-btn" title="刪除此列">✕</button></td>
+    </tr>`;
+  }).join('');
 
-        // 渲染後台表格
-        function renderAdminTable(data, updateCount = true) {
-            const tbody = document.getElementById('admin-table-body');
-            if(updateCount) {
-                document.getElementById('admin-count').textContent = `共 ${data.length} 筆`;
-            }
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const idx = parseInt(tr.getAttribute('data-idx'));
+    tr.querySelectorAll('td[contenteditable]').forEach(td => {
+      td.addEventListener('blur', ()=>{
+        const field = td.getAttribute('data-field');
+        rows[idx][field] = td.textContent.trim();
+      });
+    });
+    tr.querySelector('.del-btn').addEventListener('click', ()=>{
+      if(confirm('確定要刪除這筆藥品資料嗎？')){
+        rows.splice(idx, 1);
+        renderTable();
+      }
+    });
+  });
+}
 
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-400">找不到符合搜尋條件的資料</td></tr>`;
-                return;
-            }
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+}
+function escapeAttr(s){ return s; }
 
-            tbody.innerHTML = data.map(drug => {
-                return `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-4 font-mono text-slate-400">${drug['識別碼'] || ''}</td>
-                        <td class="p-4 font-medium text-slate-900">${drug['藥品名稱'] || ''}</td>
-                        <td class="p-4 text-slate-700">${drug['藥品中文名'] || ''}</td>
-                        <td class="p-4 text-slate-600 text-xs font-mono">${drug['學名名稱'] || ''}</td>
-                        <td class="p-4"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">${drug['藥理作用'] || ''}</span></td>
-                        <td class="p-4 text-slate-500 max-w-xs truncate" title="${drug['適應症'] || ''}">${drug['適應症'] || ''}</td>
-                        <td class="p-4 text-center font-bold text-red-600">${drug['孕婦分級'] || ''}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
+document.getElementById('addRowBtn').addEventListener('click', ()=>{
+  const maxId = rows.reduce((m,r)=> Math.max(m, parseInt(r['識別碼'])||0), 0);
+  const newRow = {};
+  FIELDS.forEach(f => newRow[f] = '');
+  newRow['識別碼'] = String(maxId+1);
+  rows.push(newRow);
+  renderTable();
+  // scroll to bottom
+  const wrap = document.querySelector('.table-wrap');
+  wrap.scrollTop = wrap.scrollHeight;
+});
 
-        // 匯出成新的 drugs.json 檔案
-        function exportJsonFile() {
-            if (currentDrugsData.length === 0) {
-                alert('目前沒有任何資料可以匯出！請先匯入 Excel。');
-                return;
-            }
-            
-            const jsonString = JSON.stringify(currentDrugsData, null, 2);
-            const blob = new Blob([jsonString], { type: "application/json;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
-            
-            const downloadLink = document.createElement("a");
-            downloadLink.href = url;
-            downloadLink.download = "drugs.json"; // 預設下載檔名
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(url);
-        }
-    </script>
+document.getElementById('filterInput').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  if(!q){ buildBody(rows); return; }
+  const filtered = rows.filter(r => FIELDS.some(f => (r[f]||'').toLowerCase().includes(q)));
+  buildBody(filtered);
+});
+
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  // sync any focused cell before export
+  document.activeElement && document.activeElement.blur();
+  const blob = new Blob([JSON.stringify(rows, null, 0)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'drugs.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+</script>
 </body>
 </html>
